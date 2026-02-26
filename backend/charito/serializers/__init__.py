@@ -1,0 +1,2 @@
+from .cobrador import CobradorSerializer
+
