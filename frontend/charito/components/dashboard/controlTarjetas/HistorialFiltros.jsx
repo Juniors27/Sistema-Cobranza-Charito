@@ -13,8 +13,8 @@ export default function HistorialFiltros({
   controlTarjetasExcel
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-      <div className="flex flex-col gap-4">
+    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 text-gray-700">
+      <div className="flex flex-col gap-4 ">
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
