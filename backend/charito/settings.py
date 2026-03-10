@@ -88,15 +88,18 @@ WSGI_APPLICATION = 'charito.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+from decouple import config
+
+from decouple import config
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',   # motor de base de datos
-        'NAME': 'charito',            # el nombre de tu base de datos en MySQL
-        'USER': 'root',                # tu usuario de MySQL
-        'PASSWORD': '123456',  # la contraseña de ese usuario
-        'HOST': 'db', 
-        #'HOST': 'localhost',                    # servidor de la BD (localhost si es local)
-        'PORT': '3306',                         # puerto por defecto de MySQL
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='3306'),
     }
 }
 
