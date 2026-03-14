@@ -2,10 +2,8 @@ import { UserCheck, MapPin, Edit, Trash2 } from "lucide-react"
 
 const CobradoresList = ({
   cobradores,
-  ventas,
   onEditar,
   onEliminar,
-  obtenerCantidadClientes
 }) => {
 
   if (cobradores.length === 0) {
@@ -20,10 +18,7 @@ const CobradoresList = ({
   return (
     <div className="space-y-3">
       {cobradores.map((cobrador) => {
-        const cantidadClientes = obtenerCantidadClientes(
-          ventas,
-          cobrador.id
-        )
+        const cantidadClientes = Number(cobrador.total_clientes_activos ?? 0)
 
         return (
           <div

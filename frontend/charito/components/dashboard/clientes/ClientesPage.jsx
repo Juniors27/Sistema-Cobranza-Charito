@@ -1,10 +1,10 @@
 "use client";
 import { useClientes } from "@/src/hooks/useClientes";
-import { usePaginacion } from "@/src/hooks/usePaginacion";
 import { Paginacion, SectionHeader } from "@/components/ui";
 import ClientesFiltros from "./ClientesFiltros";
 import ClientesTabla from "./ClientesTabla";
 import ClienteEditModal from "./ClienteEditModal";
+import ClienteDetalleModal from "./ClienteDetalleModal";
 
 export default function ClientesPage() {
   const {
@@ -18,12 +18,11 @@ export default function ClientesPage() {
     setZonaFiltro,
     modalEditar,
     setModalEditar,
+    modalDetalle,
+    ventaDetalle,
+    historialPagos,
+    cargandoHistorial,
     cargarDatos,
-    ...restCliente
-  } = useClientes();
-
-  const {
-    datosPaginados,
     paginaActual,
     totalPaginas,
     registrosPorPagina,
@@ -34,7 +33,8 @@ export default function ClientesPage() {
     cambiarRegistrosPorPagina,
     paginaSiguiente,
     irAPagina,
-  } = usePaginacion(ventasFiltradas);
+    ...restCliente
+  } = useClientes();
 
   return (
     <div className="max-w-screen-2xl mx-auto">
@@ -52,7 +52,7 @@ export default function ClientesPage() {
           exportarExcel={exportarExcel} // pendiente de implementar
         />
         <ClientesTabla
-          ventasPaginadas={datosPaginados}
+          ventasPaginadas={ventasFiltradas}
           registrosPorPagina={registrosPorPagina}
           cambiarRegistrosPorPagina={cambiarRegistrosPorPagina}
           indiceInicio={indiceInicio}
@@ -76,6 +76,14 @@ export default function ClientesPage() {
         <ClienteEditModal
           setModalEditar={setModalEditar}
           {...restCliente}
+        />
+      )}
+      {modalDetalle && (
+        <ClienteDetalleModal
+          ventaDetalle={ventaDetalle}
+          historialPagos={historialPagos}
+          cargandoHistorial={cargandoHistorial}
+          cerrarModalDetalle={restCliente.cerrarModalDetalle}
         />
       )}
     </div>

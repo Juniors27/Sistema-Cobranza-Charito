@@ -5,18 +5,28 @@ export const agruparProductos = (ventas) => {
   const map = {}
 
   ventas.forEach(v => {
-    const nombre = v.producto_nombre
+    const productos = Array.isArray(v.productos) && v.productos.length > 0
+      ? v.productos
+      : [{
+          nombre: v.producto_nombre,
+          cantidad: v.cantidad,
+          precio_total: v.precio_total,
+        }]
 
-    if (!map[nombre]) {
-      map[nombre] = {
-        nombre,
-        cantidad: 0,
-        precioTotal: 0,
+    productos.forEach((producto) => {
+      const nombre = producto.nombre
+
+      if (!map[nombre]) {
+        map[nombre] = {
+          nombre,
+          cantidad: 0,
+          precioTotal: 0,
+        }
       }
-    }
 
-    map[nombre].cantidad += v.cantidad
-    map[nombre].precioTotal += Number(v.precio_total)
+      map[nombre].cantidad += Number(producto.cantidad || 0)
+      map[nombre].precioTotal += Number(producto.precio_total || 0)
+    })
   })
 
   return Object.values(map)

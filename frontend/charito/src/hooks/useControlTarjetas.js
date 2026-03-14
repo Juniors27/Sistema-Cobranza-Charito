@@ -26,7 +26,7 @@ export const useControlTarjetas = () => {
       setLoading(true);
       
       const [ventasData, pagosData, cobradoresData] = await Promise.all([
-        getVentas(),
+        getVentas({ modulo: "control" }),
         getPagos(),
         obtenerCobradores(),
       ]);

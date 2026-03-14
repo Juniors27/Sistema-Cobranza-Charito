@@ -5,11 +5,17 @@ from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from django.utils.dateparse import parse_date
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import OuterRef, Subquery
+from django.db.models import OuterRef, Prefetch, Subquery
 from rest_framework.filters import SearchFilter, OrderingFilter
-from ..models.venta import Venta
-from ..serializers.venta import VentaSerializer
+from ..models.venta import Venta, VentaItem
+from ..serializers.venta import (
+    VentaControlSerializer,
+    VentaDashboardSerializer,
+    VentaListLiteSerializer,
+    VentaSerializer,
+)
 from ..models.pago import Pago
 
 
@@ -18,7 +24,7 @@ class VentaViewSet(ModelViewSet):
         'producto',
         'cobrador',
         'usuario_registro'
-    )
+    ).prefetch_related('items__producto')
     serializer_class = VentaSerializer
     permission_classes = [AllowAny]
 
@@ -99,25 +105,84 @@ class VentaViewSet(ModelViewSet):
         )
         
 class VentaListView(ListAPIView):
-    serializer_class = VentaSerializer
+    serializer_class = VentaListLiteSerializer
+
+    def get_serializer_class(self):
+        if self.request.query_params.get("detallado") == "1":
+            return VentaSerializer
+        modulo = self.request.query_params.get("modulo")
+        if modulo == "dashboard":
+            return VentaDashboardSerializer
+        if modulo == "control":
+            return VentaControlSerializer
+        return VentaListLiteSerializer
 
     def get_queryset(self):
-
         ultimo_pago = Pago.objects.filter(
             venta=OuterRef('pk')
         ).order_by('-fecha_pago', '-fecha_registro')
+        modulo = self.request.query_params.get("modulo")
 
-        queryset = Venta.objects.select_related(
-            'producto',
-            'cobrador'
-        ).annotate(
-            ultimo_pago_fecha=Subquery(
-                ultimo_pago.values('fecha_pago')[:1]
-            ),
-            ultimo_pago_monto=Subquery(
-                ultimo_pago.values('monto')[:1]
+        if modulo == "dashboard":
+            queryset = Venta.objects.select_related("cobrador").only(
+                "id",
+                "numero_contrato",
+                "fecha_venta",
+                "nombre",
+                "apellido",
+                "zona",
+                "monto",
+                "inicial",
+                "saldo_pendiente",
+                "fecha_primer_cobro",
+                "primer_pago_registrado",
+                "cobrador",
+                "cobrador__nombre",
+                "estado",
+                "entregado_cobrador",
+                "fecha_entrega_cobrador",
+            ).order_by("-fecha_venta")
+        elif modulo == "control":
+            queryset = Venta.objects.only(
+                "id",
+                "numero_contrato",
+                "fecha_venta",
+                "nombre",
+                "apellido",
+                "direccion",
+                "zona",
+                "frecuencia_pago",
+                "fecha_inicial",
+                "saldo_pendiente",
+                "estado",
+                "cobrador",
+            ).order_by("-fecha_venta")
+        else:
+            items_prefetch = Prefetch(
+                "items",
+                queryset=VentaItem.objects.select_related("producto").only(
+                    "id",
+                    "venta_id",
+                    "producto_id",
+                    "cantidad",
+                    "precio_total",
+                    "producto__id",
+                    "producto__nombre",
+                    "producto__categoria",
+                ),
             )
-        ).order_by('-fecha_venta')
+
+            queryset = Venta.objects.select_related(
+                'producto',
+                'cobrador'
+            ).prefetch_related(items_prefetch).annotate(
+                ultimo_pago_fecha=Subquery(
+                    ultimo_pago.values('fecha_pago')[:1]
+                ),
+                ultimo_pago_monto=Subquery(
+                    ultimo_pago.values('monto')[:1]
+                )
+            ).order_by('-fecha_venta')
 
         # 🔹 filtro por mes
         mes = self.request.query_params.get('mes')
@@ -176,3 +241,48 @@ def partial_update(self, request, *args, **kwargs):
         return Response(serializer.errors, status=400)
 
     return super().partial_update(request, *args, **kwargs)
+
+
+class ProgramacionPrimerCobroView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, pk):
+        try:
+            venta = Venta.objects.get(pk=pk)
+        except Venta.DoesNotExist:
+            return Response(
+                {"detail": "Contrato no encontrado"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        fecha_primer_cobro = request.data.get("fecha_primer_cobro")
+        entregado_cobrador = request.data.get("entregado_cobrador")
+
+        if fecha_primer_cobro is not None:
+            if fecha_primer_cobro == "":
+                venta.fecha_primer_cobro = None
+            else:
+                fecha_parseada = parse_date(str(fecha_primer_cobro))
+                if not fecha_parseada:
+                    return Response(
+                        {"fecha_primer_cobro": ["Fecha invalida"]},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                venta.fecha_primer_cobro = fecha_parseada
+
+        if entregado_cobrador is not None:
+            entregado = str(entregado_cobrador).lower() in ["true", "1", "si", "yes"]
+            venta.entregado_cobrador = entregado
+            venta.fecha_entrega_cobrador = timezone.localdate() if entregado else None
+
+        venta.save(
+            update_fields=[
+                "fecha_primer_cobro",
+                "entregado_cobrador",
+                "fecha_entrega_cobrador",
+                "fecha_actualizacion",
+            ]
+        )
+
+        serializer = VentaSerializer(venta)
+        return Response(serializer.data, status=status.HTTP_200_OK)

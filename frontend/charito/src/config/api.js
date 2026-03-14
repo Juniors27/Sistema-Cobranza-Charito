@@ -13,10 +13,16 @@ export const API = {
   ventas: {
     root: `${API_BASE_URL}/ventas/`,
     lista: `${API_BASE_URL}/lista/ventas/`,
+    programacionPrimerCobro: (ventaId) =>
+      `${API_BASE_URL}/ventas/${ventaId}/programacion-primer-cobro/`,
   },
 
   reporte: {
     cobranza: `${API_BASE_URL}/reporte/cobranza/`,
+  },
+
+  clientes: {
+    lista: `${API_BASE_URL}/lista/clientes/`,
   },
 
   pagos: {

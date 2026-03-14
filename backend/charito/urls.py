@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 from charito.views.cobrador import CobradorViewSet, CobradorListView
-from charito.views.venta import VentaViewSet, VentaListView,ValidarContratoView
+from charito.views.venta import VentaViewSet, VentaListView, ValidarContratoView, ProgramacionPrimerCobroView
 from charito.views.cliente import ListaClientesView
 from charito.views.pago import RegistrarPagoView, ListarPagosView, ReporteCobranzaView, HistorialPagosVentaView, EditarPagoView, EliminarPagoView, ObtenerUltimoPagoView
 
@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/pagos/', ListarPagosView.as_view(), name='listar-pagos'), 
     path("api/reporte/cobranza/", ReporteCobranzaView.as_view(),name="reporte-cobranza"),
     path("api/ventas/validar/<str:numero_contrato>/", ValidarContratoView.as_view(), name="validar-contrato"),
+    path('api/ventas/<int:pk>/programacion-primer-cobro/', ProgramacionPrimerCobroView.as_view(), name='venta-programacion-primer-cobro'),
     path('api/historial-pagos/<int:venta_id>/', HistorialPagosVentaView.as_view(), name='historial-pagos'),
     
      # 🆕 Nuevas rutas para editar y eliminar pagos

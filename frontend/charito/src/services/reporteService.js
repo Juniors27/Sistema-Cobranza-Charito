@@ -50,10 +50,20 @@ console.log("DATOS REPORTE:", data)
 ========================= */
 export const getHistorialPagos = async (ventaId) => {
   const res = await fetch(`${API.pagos.historial}${ventaId}/`)
+  const data = await res.json()
+
+  const sinHistorial =
+    res.status === 404 &&
+    typeof data?.mensaje === "string" &&
+    data.mensaje.toLowerCase().includes("no se encontraron pagos")
+
+  if (sinHistorial) {
+    return []
+  }
 
   if (!res.ok) {
     throw new Error("Error obteniendo historial de pagos")
   }
 
-  return res.json()
+  return data
 }

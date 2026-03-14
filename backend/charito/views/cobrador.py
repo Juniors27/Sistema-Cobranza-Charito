@@ -1,6 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import ListAPIView
-from django.db.models import Count
+from django.db.models import Count, Q
 from charito.models import Cobrador
 from charito.serializers import CobradorSerializer
 
@@ -24,6 +24,16 @@ class CobradorListView(ListAPIView):
     def get_queryset(self):
         return (
             Cobrador.objects
-            .annotate(total_clientes=Count('ventas', distinct=True))
+            .annotate(
+                total_clientes=Count('ventas', distinct=True),
+                total_clientes_activos=Count(
+                    'ventas',
+                    filter=(
+                        ~Q(ventas__estado__in=['cancelado', 'recogido', 'bajada'])
+                        & Q(ventas__saldo_pendiente__gt=0)
+                    ),
+                    distinct=True,
+                ),
+            )
             .order_by('nombre')
         )

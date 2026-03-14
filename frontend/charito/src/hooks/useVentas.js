@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-
 import { obtenerCobradores } from "@/src/services/cobradoresService";
 import {
   validarContratoService,
@@ -10,24 +9,12 @@ import {
 } from "@/src/services/ventasService";
 
 export const useVentas = (productos = []) => {
-  // =========================
-  // ESTADOS PARA BÚSQUEDA DE PRODUCTOS
-  // =========================
   const [buscarProducto, setBuscarProducto] = useState("");
   const [mostrarProductos, setMostrarProductos] = useState(false);
-
-  const productosFiltrados = productos.filter((p) =>
-    p.nombre.toLowerCase().includes(buscarProducto.toLowerCase()),
-  );
-
-   const [mostrarSaldo, setMostrarSaldo] = useState(false)
-
-  /* =========================
-     ESTADO PRINCIPAL
-  ========================== */
   const [cobradores, setCobradores] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorContrato, setErrorContrato] = useState("");
+  const [mostrarSaldo, setMostrarSaldo] = useState(false);
 
   const [formVenta, setFormVenta] = useState({
     numeroContrato: "",
@@ -36,13 +23,12 @@ export const useVentas = (productos = []) => {
     direccion: "",
     lugar: "",
     zona: "milagro",
-    producto: null,
-    cantidad: "1",
+    productos: [],
     frecuenciaPago: "semanal",
     diaCobro: "",
     vendedor: "",
     fechaVenta: new Date().toISOString().split("T")[0],
-    precioTotal: "",
+    fechaPrimerCobro: "",
     monto: "",
     dioInicial: false,
     inicial: "",
@@ -50,19 +36,31 @@ export const useVentas = (productos = []) => {
     estado: "pendiente",
   });
 
-  // Calcular saldo automáticamente
-const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
+  const productosFiltrados = useMemo(
+    () =>
+      productos.filter((p) =>
+        p.nombre.toLowerCase().includes(buscarProducto.toLowerCase())
+      ),
+    [productos, buscarProducto]
+  );
 
+  const precioTotal = useMemo(
+    () =>
+      formVenta.productos.reduce(
+        (total, producto) => total + Number(producto.precio_total || 0),
+        0
+      ),
+    [formVenta.productos]
+  );
 
-  /* =========================
-     CARGAR COBRADORES
-  ========================== */
+  const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
+
   useEffect(() => {
     const cargar = async () => {
       try {
         const data = await obtenerCobradores();
         setCobradores(data);
-      } catch (error) {
+      } catch {
         toast.error("Error al cargar cobradores");
       }
     };
@@ -70,28 +68,65 @@ const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
     cargar();
   }, []);
 
-  /* =========================
-     VALIDAR CONTRATO
-  ========================== */
+  const agregarProducto = (producto) => {
+    setFormVenta((prev) => {
+      const yaExiste = prev.productos.some((item) => item.nombre === producto.nombre);
+      if (yaExiste) {
+        toast.warning("Ese producto ya fue agregado. Puedes editar su cantidad o monto.");
+        return prev;
+      }
+
+      return {
+        ...prev,
+        productos: [
+          ...prev.productos,
+          {
+            nombre: producto.nombre,
+            categoria: producto.categoria,
+            cantidad: 1,
+            precio_total: "",
+          },
+        ],
+      };
+    });
+
+    setBuscarProducto("");
+    setMostrarProductos(false);
+  };
+
+  const actualizarProducto = (index, campo, valor) => {
+    setFormVenta((prev) => ({
+      ...prev,
+      productos: prev.productos.map((producto, itemIndex) =>
+        itemIndex === index ? { ...producto, [campo]: valor } : producto
+      ),
+    }));
+  };
+
+  const eliminarProducto = (index) => {
+    setFormVenta((prev) => ({
+      ...prev,
+      productos: prev.productos.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  };
 
   const validarContrato = async (numeroContrato) => {
     if (!numeroContrato) {
-      setErrorContrato(""); // limpia el error si el input está vacío
+      setErrorContrato("");
       return false;
     }
 
     try {
-      // Llamamos al service con el número que nos pasan
-      const existe = await validarContratoService(formVenta.numeroContrato);
+      const existe = await validarContratoService(numeroContrato);
 
       if (existe) {
-        setErrorContrato("Contrato ya está registrado"); // actualizamos el estado del error
+        setErrorContrato("Contrato ya está registrado");
         toast.warning("El contrato ya existe");
         return true;
-      } else {
-        setErrorContrato(""); // borramos el error si no existe
-        return false;
       }
+
+      setErrorContrato("");
+      return false;
     } catch (error) {
       toast.error("Error al validar contrato");
       console.error(error);
@@ -99,37 +134,48 @@ const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
     }
   };
 
-  /* =========================
-     REGISTRAR VENTA
-  ========================== */
   const registrarVenta = async () => {
     try {
       setLoading(true);
 
+      if (formVenta.productos.length === 0) {
+        toast.error("Agrega al menos un producto");
+        return false;
+      }
+
+      const productosInvalidos = formVenta.productos.some(
+        (producto) => !producto.precio_total || Number(producto.precio_total) <= 0
+      );
+
+      if (productosInvalidos) {
+        toast.error("Cada producto debe tener un monto válido");
+        return false;
+      }
+
       const payload = {
         numero_contrato: formVenta.numeroContrato,
         fecha_venta: formVenta.fechaVenta,
-
         nombre: formVenta.nombre,
         apellido: formVenta.apellido,
         direccion: formVenta.direccion,
         lugar: formVenta.lugar || "",
         zona: formVenta.zona,
-
-        producto: {
-          nombre: formVenta.producto.nombre,
-          categoria: formVenta.producto.categoria,
-        },
-
-        cantidad: Number(formVenta.cantidad || 1),
-
-        precio_total: Number(formVenta.precioTotal), // ✅ número
+        productos: formVenta.productos.map((producto) => ({
+          nombre: producto.nombre,
+          categoria: producto.categoria,
+          cantidad: Number(producto.cantidad || 1),
+          precio_total: Number(producto.precio_total || 0),
+        })),
+        cantidad: formVenta.productos.reduce(
+          (total, producto) => total + Number(producto.cantidad || 0),
+          0
+        ),
+        precio_total: Number(precioTotal),
         monto: Number(formVenta.monto),
         inicial: Number(formVenta.inicial || 0),
-
         frecuencia_pago: formVenta.frecuenciaPago,
         dia_cobro: formVenta.diaCobro || "",
-
+        fecha_primer_cobro: formVenta.fechaPrimerCobro || null,
         vendedor: formVenta.vendedor || "",
         cobrador: Number(formVenta.cobradorId),
       };
@@ -137,25 +183,21 @@ const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
       await registrarVentaService(payload);
       toast.success("Venta registrada correctamente");
 
-       // ✅ LIMPIAR FORMULARIO
-      setFormVenta(prev => ({
+      setFormVenta((prev) => ({
         ...prev,
         numeroContrato: "",
         nombre: "",
         apellido: "",
         direccion: "",
         lugar: "",
-        producto: null,
-        cantidad: "1",
-        precioTotal: "",
+        productos: [],
+        fechaPrimerCobro: "",
         monto: "",
         inicial: "",
-        dioInicial:false,
-        //cobradorId: "",
-        
-      }))
-      setBuscarProducto("")
-      setMostrarProductos(false)
+        dioInicial: false,
+      }));
+      setBuscarProducto("");
+      setMostrarProductos(false);
 
       return true;
     } catch (error) {
@@ -165,19 +207,14 @@ const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
     } finally {
       setLoading(false);
     }
-
-    
-
   };
 
   return {
     cobradores,
-    setCobradores,
     loading,
     formVenta,
     setFormVenta,
     errorContrato,
-    setErrorContrato,
     buscarProducto,
     setBuscarProducto,
     mostrarProductos,
@@ -188,5 +225,9 @@ const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
     mostrarSaldo,
     setMostrarSaldo,
     saldo,
+    precioTotal,
+    agregarProducto,
+    actualizarProducto,
+    eliminarProducto,
   };
 };

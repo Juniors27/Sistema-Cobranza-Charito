@@ -81,6 +81,9 @@ class Venta(models.Model):
     # Control
     fecha_inicial = models.DateField(blank=True, null=True)
     primer_pago_registrado = models.BooleanField(default=False)
+    fecha_primer_cobro = models.DateField(blank=True, null=True)
+    entregado_cobrador = models.BooleanField(default=False)
+    fecha_entrega_cobrador = models.DateField(blank=True, null=True)
 
     vendedor = models.CharField(max_length=100, blank=True, null=True)
     cobrador = models.ForeignKey(
@@ -118,3 +121,66 @@ class Venta(models.Model):
 
     def __str__(self):
         return f"{self.numero_contrato} - {self.nombre} {self.apellido}"
+
+    def obtener_items_producto(self):
+        items = list(self.items.select_related("producto").all())
+
+        if items:
+            return items
+
+        if self.producto_id:
+            return [
+                VentaItem(
+                    venta=self,
+                    producto=self.producto,
+                    cantidad=self.cantidad,
+                    precio_total=self.precio_total,
+                )
+            ]
+
+        return []
+
+    def obtener_productos_resumen(self):
+        items = self.obtener_items_producto()
+        if not items:
+            return ""
+
+        partes = []
+        for item in items:
+            nombre = item.producto.nombre if item.producto_id else ""
+            if item.cantidad and item.cantidad > 1:
+                partes.append(f"{nombre} x{item.cantidad}")
+            else:
+                partes.append(nombre)
+
+        return " + ".join(filter(None, partes))
+
+
+class VentaItem(models.Model):
+    venta = models.ForeignKey(
+        Venta,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.PROTECT,
+        related_name="items_vendidos",
+    )
+    cantidad = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+    )
+    precio_total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.venta.numero_contrato} - {self.producto.nombre}"

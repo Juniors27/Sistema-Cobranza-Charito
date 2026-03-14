@@ -63,8 +63,8 @@ export const usePagos = () => {
 
   const buscarUltimoPago = async () => {
     if (!formPago.numeroContrato) {
-      toast.error("Ingresa un número de contrato");
-      return;
+      toast.error("Ingresa un numero de contrato");
+      return false;
     }
 
     const { res, data } = await buscarUltimoPagoService(
@@ -73,9 +73,9 @@ export const usePagos = () => {
 
     if (!res.ok) {
       toast.error(
-        data.mensaje || data.error || "No se encontró el último pago",
+        data.mensaje || data.error || "No se encontro el ultimo pago",
       );
-      return;
+      return false;
     }
 
     setFormPago((prev) => ({ ...prev, monto: data.pago.monto }));
@@ -83,6 +83,7 @@ export const usePagos = () => {
     setCobradorBatch(data.pago.cobrador.toString());
     setPagoEditando(data.pago);
     setModoEdicion(true);
+    return true;
   };
 
   const registrarPago = async () => {
@@ -93,7 +94,7 @@ export const usePagos = () => {
       !fechaPagoBatch
     ) {
       toast.error("Completa todos los campos");
-      return;
+      return false;
     }
 
     const venta = ventas.find(
@@ -101,12 +102,12 @@ export const usePagos = () => {
     );
     if (!venta) {
       toast.error("Contrato no encontrado");
-      return;
+      return false;
     }
 
     if (!validarFechaNoFutura(fechaPagoBatch)) {
       toast.warning("No se aceptan fechas futuras");
-      return;
+      return false;
     }
 
     const payload = {
@@ -121,12 +122,13 @@ export const usePagos = () => {
 
     if (!res.ok) {
       toast.error(data.error || "Error al registrar");
-      return;
+      return false;
     }
 
     actualizarVentaLocal(venta, data);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
     toast.success("Pago registrado exitosamente");
+    return true;
   };
 
   const editarPago = async () => {
@@ -162,7 +164,7 @@ export const usePagos = () => {
     if (!pagoEditando) return;
 
     const confirmar = window.confirm(
-      "¿Eliminar pago? Esta acción no se puede deshacer",
+      "Eliminar pago? Esta accion no se puede deshacer",
     );
     if (!confirmar) return;
 
@@ -204,7 +206,7 @@ export const usePagos = () => {
       venta: venta.id,
       fecha_pago: fechaPagoBatch,
       monto: parseFloat(formPago.monto),
-      cobrador: parseInt(cobradorBatch), // se guarda pero no sumará
+      cobrador: parseInt(cobradorBatch),
       es_primer_pago: false,
       es_descuento: true,
       notas: "DESCUENTO",

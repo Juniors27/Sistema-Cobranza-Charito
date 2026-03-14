@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { toast } from "sonner"
 
 import { getReporteCobranza, getHistorialPagos } from "@/src/services/reporteService"
@@ -12,6 +12,7 @@ export const useReporteCobranza = () => {
   const [cobradores, setCobradores] = useState([])
   const [pagosReporteFiltrados, setPagosReporteFiltrados] = useState([])
   const [filtrosAplicados, setFiltrosAplicados] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
 
   const [historialPagos, setHistorialPagos] = useState([])
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
@@ -82,7 +83,29 @@ export const useReporteCobranza = () => {
     })
     setPagosReporteFiltrados([])
     setFiltrosAplicados(false)
+    setSearchTerm("")
   }
+
+  const pagosReporteVisibles = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase()
+
+    const pagosFiltrados = pagosReporteFiltrados.filter((pago) => {
+      if (!search) return true
+
+      return (
+        pago.numeroContrato?.toLowerCase().includes(search) ||
+        pago.cliente?.toLowerCase().includes(search)
+      )
+    })
+
+    return [...pagosFiltrados].sort((a, b) => {
+      const aCancelado = a.estado === "cancelado" || Number(a.saldo_pendiente) === 0
+      const bCancelado = b.estado === "cancelado" || Number(b.saldo_pendiente) === 0
+
+      if (aCancelado === bCancelado) return 0
+      return aCancelado ? -1 : 1
+    })
+  }, [pagosReporteFiltrados, searchTerm])
 
   /* =========================
      HISTORIAL
@@ -121,12 +144,15 @@ export const useReporteCobranza = () => {
     setTipoFecha,
     cobradores,
     pagosReporteFiltrados,
+    pagosReporteVisibles,
     filtrosAplicados,
+    searchTerm,
     historialPagos,
     cargandoHistorial,
     modalAbierto,
     pagoSeleccionado,
     filtros,
+    setSearchTerm,
     handleFiltroChange,
     aplicarFiltros,
     limpiarFiltros,

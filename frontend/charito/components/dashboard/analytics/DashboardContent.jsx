@@ -1,27 +1,303 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import {
-  Users,
-  DollarSign,
-  AlertCircle,
+  CalendarClock,
+  CalendarDays,
+  CheckCheck,
+  ClipboardList,
+  Filter,
   MapPin,
-  UserCheck,  
+  UserCheck,
+  Users,
   XCircle,
 } from "lucide-react"
 import { LoadingScreen, ErrorScreen, SectionHeader } from "@/components/ui"
-
 import { useDashboard } from "@/src/hooks/useDashboard"
+
+const periodos = [
+  { id: "semana_laboral", label: "Semana Laboral" },
+  { id: "hoy", label: "Hoy" },
+  { id: "historico", label: "Historico" },
+  { id: "rango", label: "Rango" },
+]
+
+const formatearFecha = (fecha) => {
+  if (!fecha) return "No definida"
+
+  const [year, month, day] = String(fecha).split("-")
+  if (!year || !month || !day) return fecha
+
+  return `${day}/${month}/${year}`
+}
+
+function PanelProgramacionPrimerCobro({
+  contratosPendientesProgramacion,
+  guardarFechaPrimerCobro,
+  guardandoProgramacionId,
+}) {
+  const [fechasPorContrato, setFechasPorContrato] = useState({})
+
+  const valorFecha = (contratoId) => fechasPorContrato[contratoId] || ""
+
+  if (contratosPendientesProgramacion.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="rounded-[28px] border border-amber-200 bg-linear-to-br from-white to-amber-50 p-6 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 flex items-center gap-3">
+            <CalendarClock className="h-7 w-7 text-amber-700" />
+            Programar primer cobro
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+            Completa la fecha prometida del primer pago para las ventas registradas el 12 y 13 de marzo de 2026.
+          </p>
+        </div>
+        <div className="text-sm font-medium text-amber-700">
+          {contratosPendientesProgramacion.length} contratos por completar
+        </div>
+      </div>
+
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-amber-100 bg-white">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="bg-amber-50 text-slate-700">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold">Contrato</th>
+              <th className="px-4 py-3 text-left font-semibold">Cliente</th>
+              <th className="px-4 py-3 text-left font-semibold">Cobrador</th>
+              <th className="px-4 py-3 text-left font-semibold">Fecha venta</th>
+              <th className="px-4 py-3 text-left font-semibold">Fecha primer cobro</th>
+              <th className="px-4 py-3 text-right font-semibold">Accion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {contratosPendientesProgramacion.map((contrato) => (
+              <tr key={contrato.id} className="border-t border-amber-100">
+                <td className="px-4 py-3 font-semibold text-slate-900">
+                  {contrato.numero_contrato}
+                </td>
+                <td className="px-4 py-3 text-slate-700">{contrato.cliente}</td>
+                <td className="px-4 py-3 text-slate-700">{contrato.cobrador_nombre}</td>
+                <td className="px-4 py-3 text-slate-600">
+                  {formatearFecha(contrato.fecha_venta)}
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="date"
+                    value={valorFecha(contrato.id)}
+                    onChange={(e) =>
+                      setFechasPorContrato((prev) => ({
+                        ...prev,
+                        [contrato.id]: e.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-slate-800 focus:outline-none focus:border-amber-500"
+                  />
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={async () => {
+                      const fecha = valorFecha(contrato.id)
+                      if (!fecha) return
+
+                      const guardado = await guardarFechaPrimerCobro(contrato.id, fecha)
+                      if (guardado) {
+                        setFechasPorContrato((prev) => ({
+                          ...prev,
+                          [contrato.id]: "",
+                        }))
+                      }
+                    }}
+                    disabled={!valorFecha(contrato.id) || guardandoProgramacionId === contrato.id}
+                    className="rounded-xl bg-amber-500 px-4 py-2 font-semibold text-slate-950 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {guardandoProgramacionId === contrato.id ? "Guardando..." : "Guardar"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+}
+
+function PanelPrimerosCobros({
+  primerosCobrosPorCobrador,
+  contratosPrimerCobroPeriodo,
+  marcarEntregaCobrador,
+  guardandoProgramacionId,
+}) {
+  const totalEntregados = useMemo(
+    () => contratosPrimerCobroPeriodo.filter((contrato) => contrato.entregado_cobrador).length,
+    [contratosPrimerCobroPeriodo]
+  )
+
+  return (
+    <section className="rounded-[28px] border border-sky-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 flex items-center gap-3">
+            <ClipboardList className="h-7 w-7 text-sky-700" />
+            Primeros cobros del periodo
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+            Aqui ves los contratos cuyo primer pago fue programado dentro del periodo seleccionado, para separarlos y entregarlos al cobrador correspondiente.
+          </p>
+        </div>
+        <div className="flex gap-3 text-sm">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-slate-600">
+            Total: <span className="font-semibold text-slate-900">{contratosPrimerCobroPeriodo.length}</span>
+          </div>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700">
+            Entregados: <span className="font-semibold">{totalEntregados}</span>
+          </div>
+        </div>
+      </div>
+
+      {contratosPrimerCobroPeriodo.length === 0 ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
+          No hay contratos con primer cobro programado para este periodo.
+        </div>
+      ) : (
+        <div className="mt-6 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            {primerosCobrosPorCobrador.map((item) => (
+              <article
+                key={item.id}
+                className="rounded-3xl border border-sky-100 bg-linear-to-br from-white to-sky-50 p-5"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
+                      Primeros cobros
+                    </div>
+                    <div className="mt-3 text-4xl font-semibold text-slate-900">
+                      {item.cantidad}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-sky-100 p-3 text-sky-700">
+                    <CalendarClock className="h-6 w-6" />
+                  </div>
+                </div>
+                <div className="mt-4 text-sm">
+                  <div className="font-semibold text-slate-900">{item.nombre}</div>
+                  <div className="capitalize text-slate-500">{item.zona}</div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                  <div className="rounded-xl bg-white px-3 py-2 text-slate-600">
+                    Pendientes: <span className="font-semibold text-slate-900">{item.pendientes}</span>
+                  </div>
+                  <div className="rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700">
+                    Entregados: <span className="font-semibold">{item.entregados}</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {primerosCobrosPorCobrador
+            .filter((item) => item.contratos.length > 0)
+            .map((item) => (
+              <div
+                key={item.id}
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+              >
+                <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">{item.nombre}</h3>
+                    <p className="text-sm capitalize text-slate-500">{item.zona}</p>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    {item.contratos.length} contratos programados
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px] text-sm">
+                    <thead className="bg-slate-50 text-slate-700">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold">Contrato</th>
+                        <th className="px-4 py-3 text-left font-semibold">Cliente</th>
+                        <th className="px-4 py-3 text-left font-semibold">Fecha venta</th>
+                        <th className="px-4 py-3 text-left font-semibold">Primer cobro</th>
+                        <th className="px-4 py-3 text-right font-semibold">Saldo</th>
+                        <th className="px-4 py-3 text-left font-semibold">Entrega</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {item.contratos.map((contrato) => (
+                        <tr key={contrato.id} className="border-t border-slate-100">
+                          <td className="px-4 py-3 font-semibold text-slate-900">
+                            {contrato.numero_contrato}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">{contrato.cliente}</td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {formatearFecha(contrato.fecha_venta)}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {formatearFecha(contrato.fecha_primer_cobro)}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-rose-700">
+                            S/ {Number(contrato.saldo_pendiente || 0).toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <label className="inline-flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={contrato.entregado_cobrador}
+                                onChange={(e) =>
+                                  marcarEntregaCobrador(contrato.id, e.target.checked)
+                                }
+                                disabled={guardandoProgramacionId === contrato.id}
+                                className="h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-600"
+                              />
+                              <span className="text-sm text-slate-700">
+                                {contrato.entregado_cobrador
+                                  ? `Entregado${contrato.fecha_entrega_cobrador ? ` (${formatearFecha(contrato.fecha_entrega_cobrador)})` : ""}`
+                                  : "Pendiente de entrega"}
+                              </span>
+                            </label>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+    </section>
+  )
+}
 
 export default function DashboardContent() {
   const {
     ventasActivas,
     clientesPorZona,
     clientesPorCobrador,
-    totalSaldoPendiente,
-    totalVentas,
+    canceladasPorCobrador,
+    contratosPrimerCobroPeriodo,
+    primerosCobrosPorCobrador,
+    contratosPendientesProgramacion,
+    periodo,
+    setPeriodo,
+    fechaInicio,
+    setFechaInicio,
+    fechaFin,
+    setFechaFin,
+    etiquetaPeriodo,
     loading,
     error,
     cargarDatos,
+    guardandoProgramacionId,
+    guardarFechaPrimerCobro,
+    marcarEntregaCobrador,
   } = useDashboard()
 
   if (loading) {
@@ -29,157 +305,224 @@ export default function DashboardContent() {
   }
 
   if (error) {
-    return (
-      <ErrorScreen
-        mensaje={error}
-        onRetry={cargarDatos}
-      />
-    )
+    return <ErrorScreen mensaje={error} onRetry={cargarDatos} />
   }
 
-  /* =========================
-     RENDER PRINCIPAL
-  ========================== */
   return (
-    <div className="max-w-screen-2xl mx-auto">
+    <div className="max-w-screen-2xl mx-auto space-y-6">
+      <SectionHeader
+        titulo="Dashboard"
+        subtitulo="Panel administrativo para seguimiento operativo, programacion de primeros cobros y control comercial"
+        onRefresh={cargarDatos}
+      />
 
-          <SectionHeader
-            titulo="Dashboard"
-            subtitulo="Resumen general del sistema (solo contratos activos con saldo pendiente)"
-            onRefresh={cargarDatos}
-          />                
-      
-
-      <div className="space-y-6">
-        {/* TARJETAS DE MÉTRICAS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-linear-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <DollarSign className="w-16 h-16 opacity-80" />
-              <div className="text-right">
-                <div className="text-sm opacity-90">Total Ventas</div>
-                <div className="text-3xl font-bold">
-                  S/ {totalVentas.toFixed(2)}
-                </div>
-              </div>
+      <section className="rounded-[28px] border border-slate-200 bg-linear-to-br from-slate-950 via-slate-900 to-slate-800 p-6 md:p-8 text-slate-50 shadow-xl shadow-slate-300/30">
+        <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1 text-xs tracking-[0.2em] uppercase text-slate-300">
+              <CalendarDays className="h-4 w-4" />
+              Control Administrativo
             </div>
+            <h2 className="mt-4 text-3xl md:text-4xl font-semibold tracking-tight">
+              Resumen ejecutivo por periodo de trabajo
+            </h2>
+            <p className="mt-3 text-sm md:text-base text-slate-300">
+              {etiquetaPeriodo}. La cartera activa se muestra de forma general, las canceladas se calculan por su ultimo pago y los primeros cobros se organizan por la fecha prometida al cliente.
+            </p>
           </div>
 
-          <div className="bg-linear-to-br from-red-500 to-red-600 rounded-2xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <AlertCircle className="w-16 h-16 opacity-80" />
-              <div className="text-right">
-                <div className="text-sm opacity-90">Saldo Pendiente</div>
-                <div className="text-3xl font-bold">
-                  S/ {totalSaldoPendiente.toFixed(2)}
-                </div>
-              </div>
+          <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4 md:p-5 min-w-full xl:min-w-[430px]">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-200 mb-4">
+              <Filter className="h-4 w-4" />
+              Filtros del dashboard
             </div>
-          </div>
 
-          <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <Users className="w-16 h-16 opacity-80" />
-              <div className="text-right">
-                <div className="text-sm opacity-90">Contratos Activos</div>
-                <div className="text-3xl font-bold">
-                  {ventasActivas.length}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CLIENTES POR ZONA */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-            <MapPin className="w-8 h-8 mr-2 text-indigo-600" />
-            Clientes Activos por Zona
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Object.entries(clientesPorZona).map(([zona, cantidad]) => (
-              <div
-                key={zona}
-                className="bg-blue-50 p-6 rounded-xl border-2 border-blue-200"
-              >
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-600">
-                    {cantidad}
-                  </div>
-                  <div className="text-gray-700 font-semibold mt-2 capitalize">
-                    {zona}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CLIENTES POR COBRADOR */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-            <UserCheck className="w-8 h-8 mr-2 text-indigo-600" />
-            Clientes por Cobrador
-          </h2>
-
-          {clientesPorCobrador.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <UserCheck className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No hay cobradores registrados</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {clientesPorCobrador.map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-50 rounded-xl p-4 hover:bg-gray-200 transition-colors"
+            <div className="flex flex-wrap gap-2">
+              {periodos.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setPeriodo(item.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    periodo === item.id
+                      ? "bg-amber-400 text-slate-950"
+                      : "bg-slate-800 text-slate-200 hover:bg-slate-700"
+                  }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-indigo-100 p-3 rounded-full">
-                        <UserCheck className="w-6 h-6 text-indigo-600" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-800">
-                          {item.nombre}
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center capitalize">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {item.zona}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-indigo-600">
-                        {item.cantidad}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        contratos activos
-                      </div>
-                    </div>
-                  </div>
-
-                  {item.bajadas > 0 && (
-                    <div className="flex items-center justify-between bg-red-50 border-2 border-red-200 rounded-lg p-3 mt-2">
-                      <div className="flex items-center space-x-2">
-                        <XCircle className="w-5 h-5 text-red-600" />
-                        <span className="text-sm font-medium text-red-700">
-                          Contratos Bajados
-                        </span>
-                      </div>
-                      <div className="text-xl font-bold text-red-600">
-                        {item.bajadas}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  {item.label}
+                </button>
               ))}
             </div>
-          )}
+
+            {periodo === "rango" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                <label className="text-sm text-slate-300">
+                  <span className="block mb-2">Fecha inicio</span>
+                  <input
+                    type="date"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </label>
+
+                <label className="text-sm text-slate-300">
+                  <span className="block mb-2">Fecha fin</span>
+                  <input
+                    type="date"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
         </div>
+      </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Contratos Activos
+              </p>
+              <p className="mt-4 text-4xl font-semibold text-slate-900">
+                {ventasActivas.length}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-sky-100 p-3 text-sky-700">
+              <Users className="h-7 w-7" />
+            </div>
+          </div>
+        </article>
+
+        {canceladasPorCobrador.map((item) => (
+          <article
+            key={item.id}
+            className="rounded-3xl border border-rose-200 bg-linear-to-br from-white to-rose-50 p-6 shadow-sm"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-500">
+                  Canceladas
+                </p>
+                <p className="mt-4 text-4xl font-semibold text-slate-900">
+                  {item.cantidad}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-rose-100 p-3 text-rose-700">
+                <XCircle className="h-7 w-7" />
+              </div>
+            </div>
+            <div className="mt-5 border-t border-rose-100 pt-4">
+              <div className="font-semibold text-slate-800">{item.nombre}</div>
+              <div className="text-sm capitalize text-slate-500">{item.zona}</div>
+            </div>
+          </article>
+        ))}
       </div>
+
+      <PanelProgramacionPrimerCobro
+        contratosPendientesProgramacion={contratosPendientesProgramacion}
+        guardarFechaPrimerCobro={guardarFechaPrimerCobro}
+        guardandoProgramacionId={guardandoProgramacionId}
+      />
+
+      <PanelPrimerosCobros
+        primerosCobrosPorCobrador={primerosCobrosPorCobrador}
+        contratosPrimerCobroPeriodo={contratosPrimerCobroPeriodo}
+        marcarEntregaCobrador={marcarEntregaCobrador}
+        guardandoProgramacionId={guardandoProgramacionId}
+      />
+
+      <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl md:text-2xl font-semibold text-slate-900 mb-5 flex items-center">
+          <MapPin className="w-7 h-7 mr-3 text-sky-700" />
+          Clientes Activos por Zona
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(clientesPorZona).map(([zona, cantidad]) => (
+            <div
+              key={zona}
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6"
+            >
+              <div className="text-4xl font-semibold text-slate-900">{cantidad}</div>
+              <div className="mt-2 text-sm font-medium capitalize text-slate-500">
+                {zona}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl md:text-2xl font-semibold text-slate-900 mb-5 flex items-center">
+          <UserCheck className="w-7 h-7 mr-3 text-sky-700" />
+          Clientes por Cobrador
+        </h2>
+
+        {clientesPorCobrador.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <UserCheck className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>No hay cobradores registrados</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {clientesPorCobrador.map((item, index) => (
+              <article
+                key={index}
+                className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-2xl bg-sky-100 p-3 text-sky-700">
+                      <UserCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900">{item.nombre}</div>
+                      <div className="text-sm text-slate-500 flex items-center capitalize">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {item.zona}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-3xl font-semibold text-slate-900">
+                      {item.cantidad}
+                    </div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      activos
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                    <div className="text-xs uppercase tracking-[0.18em] text-rose-600">
+                      Cancelados
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold text-rose-700">
+                      {item.canceladas}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                    <div className="text-xs uppercase tracking-[0.18em] text-red-600">
+                      Bajados
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold text-red-700">
+                      {item.bajadas}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }

@@ -18,10 +18,12 @@ class PagoSerializer(serializers.ModelSerializer):
 class PagoReporteSerializer(serializers.ModelSerializer):
     venta_id = serializers.IntegerField(source='venta.id') 
     numeroContrato = serializers.CharField(source='venta.numero_contrato')
+    fecha_venta = serializers.DateField(source='venta.fecha_venta')
+    estado = serializers.CharField(source='venta.estado')
     cliente = serializers.SerializerMethodField()
     zona = serializers.CharField(source='venta.zona')
     direccion = serializers.CharField(source='venta.direccion')
-    producto = serializers.CharField(source='venta.producto.nombre')
+    producto = serializers.SerializerMethodField()
     
     saldo_pendiente = serializers.DecimalField(
         source='venta.saldo_pendiente',
@@ -38,6 +40,8 @@ class PagoReporteSerializer(serializers.ModelSerializer):
             'fecha_pago',
             'monto',
             'numeroContrato',
+            'fecha_venta',
+            'estado',
             'cliente',
             'zona',
             'direccion',    
@@ -49,6 +53,9 @@ class PagoReporteSerializer(serializers.ModelSerializer):
 
     def get_cliente(self, obj):
         return f"{obj.venta.nombre} {obj.venta.apellido}"
+
+    def get_producto(self, obj):
+        return obj.venta.obtener_productos_resumen()
     
 # 🆕 NUEVO SERIALIZER PARA HISTORIAL
 class HistorialPagosSerializer(serializers.ModelSerializer):

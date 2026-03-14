@@ -49,7 +49,7 @@ export const useAnalyticsProductos = () => {
           return
         }
 
-        data = await getVentasFiltradas({ mes: mesSeleccionado })
+        data = await getVentasFiltradas({ mes: mesSeleccionado, detallado: true })
       }
 
       if (filterType === "rango") {
@@ -65,7 +65,8 @@ export const useAnalyticsProductos = () => {
 
         data = await getVentasFiltradas({
           fechaInicio,
-          fechaFin
+          fechaFin,
+          detallado: true,
         })
       }
 

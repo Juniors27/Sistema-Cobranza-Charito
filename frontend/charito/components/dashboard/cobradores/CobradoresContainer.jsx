@@ -3,9 +3,9 @@
 import { useState, useCallback } from "react"
 import { RefreshCw, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
+import { SectionHeader } from "@/components/ui"
 
 import { useCobradores } from "@/src/hooks/useCobradores"
-import { obtenerCantidadClientes } from "@/src/utils/cobradoresUtils"
 
 import CobradorForm from "./CobradorForm"
 import CobradoresList from "./CobradoresList"
@@ -13,7 +13,6 @@ import CobradoresList from "./CobradoresList"
 const CobradoresContainer = () => {
   const {
     cobradores,
-    ventas,
     loading,
     error,
     agregar,
@@ -45,7 +44,7 @@ const CobradoresContainer = () => {
 
       setForm({ nombre: "", zona: "milagro" })
     } catch {
-      toast.error("Ocurrió un error al guardar")
+      toast.error("Ocurrio un error al guardar")
     }
   }, [form, editando, agregar, actualizar])
 
@@ -84,10 +83,14 @@ const CobradoresContainer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      <SectionHeader
+        titulo="Cobradores"
+        subtitulo="Administra el equipo de cobranza y su asignacion comercial"
+      />
 
+      <div className="max-w-7xl mx-auto bg-white rounded-[28px] border border-slate-200 shadow-[0_18px_38px_rgba(15,23,42,0.06)] p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <CobradorForm
             form={form}
             setForm={setForm}
@@ -101,12 +104,9 @@ const CobradoresContainer = () => {
 
           <CobradoresList
             cobradores={cobradores}
-            ventas={ventas}
             onEditar={manejarEditar}
             onEliminar={manejarEliminar}
-            obtenerCantidadClientes={obtenerCantidadClientes}
           />
-
         </div>
       </div>
     </div>

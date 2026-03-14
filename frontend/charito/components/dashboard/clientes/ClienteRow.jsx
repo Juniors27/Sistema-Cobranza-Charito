@@ -1,8 +1,9 @@
-import { Edit, Trash2, Package, ArrowDownCircle } from "lucide-react"
+import { Edit, Trash2, Package, ArrowDownCircle, Eye } from "lucide-react"
 import { calcularEstadoAutomatico, obtenerColorEstado, formatearFechaDMY} from "@/src/utils/clientesUtils"
 
 export default function ClienteRow({
     venta,
+    abrirModalDetalle,
     abrirModalEditar,
     cambiarEstadoVenta,
     eliminarVenta,
@@ -54,6 +55,14 @@ export default function ClienteRow({
 
             <td className="px-4 py-3">
                 <div className="flex justify-center gap-2">
+                    <button
+                        onClick={() => abrirModalDetalle(venta)}
+                        className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200"
+                        aria-label={`Ver detalle de ${venta.nombre} ${venta.apellido}`}
+                    >
+                        <Eye className="w-4 h-4" />
+                    </button>
+
                     <button
                         onClick={() => abrirModalEditar(venta)}
                         className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"

@@ -4,6 +4,7 @@ from charito.models import Cobrador
 
 class CobradorSerializer(serializers.ModelSerializer):
     total_clientes = serializers.IntegerField(read_only=True)
+    total_clientes_activos = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Cobrador
@@ -13,5 +14,6 @@ class CobradorSerializer(serializers.ModelSerializer):
             'zona',
             'activo',
             'fecha_registro',
-            'total_clientes'
+            'total_clientes',
+            'total_clientes_activos',
         ]

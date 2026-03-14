@@ -90,8 +90,6 @@ WSGI_APPLICATION = 'charito.wsgi.application'
 
 from decouple import config
 
-from decouple import config
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

@@ -1,16 +1,13 @@
 import { useState, useEffect } from "react"
 import {
   obtenerCobradores,
-  obtenerVentas,
   crearCobrador,
   actualizarCobrador,
   eliminarCobradorService,
 } from "@/src/services/cobradoresService"
-import { getVentas } from "../services/ventasService"
 
 export const useCobradores = () => {
   const [cobradores, setCobradores] = useState([])
-  const [ventas, setVentas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -19,13 +16,9 @@ export const useCobradores = () => {
     setError(null)
 
     try {
-      const [cobradoresData, ventasData] = await Promise.all([
-        obtenerCobradores(),
-        getVentas(),
-      ])
+      const cobradoresData = await obtenerCobradores()
 
       setCobradores(cobradoresData)
-      setVentas(ventasData)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -54,7 +47,6 @@ export const useCobradores = () => {
 
   return {
     cobradores,
-    ventas,
     loading,
     error,
     agregar,

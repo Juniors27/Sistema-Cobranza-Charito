@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   clientesService,
   cambiarEstadoVentaService,
+  exportarClientesFiltradosService,
 } from "@/src/services/clientesService";
+import { getHistorialPagos } from "@/src/services/reporteService";
 import { productos } from "@/src/data/productos";
-import { getVentas } from "@/src/services/ventasService";
+import { getVentaDetalle } from "@/src/services/ventasService";
 import { obtenerCobradores } from "@/src/services/cobradoresService";
 import { exportarExcel as exportarExcelUtil } from "@/src/utils/clientesUtils";
 
@@ -13,31 +15,61 @@ export const useClientes = () => {
   const [ventas, setVentas] = useState([]);
   const [cobradores, setCobradores] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchDebounced, setSearchDebounced] = useState("");
   const [zonaFiltro, setZonaFiltro] = useState("todas");
   const [modalEditar, setModalEditar] = useState(false);
   const [ventaEditar, setVentaEditar] = useState(null);
+  const [modalDetalle, setModalDetalle] = useState(false);
+  const [ventaDetalle, setVentaDetalle] = useState(null);
+  const [historialPagos, setHistorialPagos] = useState([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [buscarProductoEdit, setBuscarProductoEdit] = useState("");
   const [mostrarProductosEdit, setMostrarProductosEdit] = useState(false);
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
+  const [totalRegistros, setTotalRegistros] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setSearchDebounced(searchTerm.trim());
+      setPaginaActual(1);
+    }, 350);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [zonaFiltro, registrosPorPagina]);
 
   useEffect(() => {
     cargarDatos();
-  }, []);
+  }, [paginaActual, registrosPorPagina, searchDebounced, zonaFiltro]);
 
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const [ventasData, cobradoresData] = await Promise.all([
-        getVentas(),
+      setError(null);
+
+      const [clientesData, cobradoresData] = await Promise.all([
+        clientesService.listar({
+          page: paginaActual,
+          pageSize: registrosPorPagina,
+          search: searchDebounced,
+          zona: zonaFiltro,
+        }),
         obtenerCobradores(),
       ]);
 
-      setVentas(ventasData);
+      setVentas(clientesData.results || []);
+      setTotalRegistros(clientesData.count || 0);
+      setTotalPaginas(Math.max(1, Math.ceil((clientesData.count || 0) / registrosPorPagina)));
       setCobradores(cobradoresData);
-    } catch (error) {
-      setError(error.message);
+    } catch (loadError) {
+      setError(loadError.message);
       toast.error("Error al cargar los datos");
     } finally {
       setLoading(false);
@@ -49,66 +81,167 @@ export const useClientes = () => {
       const venta = ventas.find((v) => v.numero_contrato === numero_contrato);
 
       if (!venta) return toast.error("No se encontró la venta");
-      if (venta.estado === "cancelado")
-        return toast.error("La venta está cancelada");
+      if (venta.estado === "cancelado") return toast.error("La venta está cancelada");
 
-      const nuevoEstado =
-        venta.estado === estadoObjetivo ? "pendiente" : estadoObjetivo;
+      const nuevoEstado = venta.estado === estadoObjetivo ? "pendiente" : estadoObjetivo;
 
       await cambiarEstadoVentaService(venta.id, nuevoEstado);
-
-      setVentas((prev) =>
-        prev.map((v) =>
-          v.id === venta.id ? { ...v, estado: nuevoEstado } : v,
-        ),
-      );
-
+      await cargarDatos();
       toast.success("Estado actualizado");
-    } catch (error) {
+    } catch {
       toast.error("Error al cambiar el estado");
     }
   };
 
-  const abrirModalEditar = (venta) => {
-    setVentaEditar({ ...venta });
+  const abrirModalEditar = async (venta) => {
+    try {
+      const ventaDetallada = await getVentaDetalle(venta.id);
 
-    const productoEncontrado = productos.find(
-      (p) => p.nombre === venta.producto_nombre,
-    );
+      const productosVenta =
+        Array.isArray(ventaDetallada.productos) && ventaDetallada.productos.length > 0
+          ? ventaDetallada.productos.map((producto) => ({
+              nombre: producto.nombre,
+              categoria: producto.categoria,
+              cantidad: String(producto.cantidad ?? 1),
+              precio_total: String(producto.precio_total ?? ""),
+            }))
+          : [
+              {
+                nombre: ventaDetallada.producto_nombre,
+                categoria: "",
+                cantidad: String(ventaDetallada.cantidad ?? 1),
+                precio_total: String(ventaDetallada.precio_total ?? ""),
+              },
+            ];
 
-    setProductoSeleccionado(productoEncontrado || null);
-    setBuscarProductoEdit(venta.producto_nombre || "");
-    setModalEditar(true);
+      setVentaEditar({
+        ...ventaDetallada,
+        productos: productosVenta,
+      });
+      setBuscarProductoEdit("");
+      setMostrarProductosEdit(false);
+      setModalEditar(true);
+    } catch {
+      toast.error("No se pudo cargar la venta para editar");
+    }
+  };
+
+  const agregarProductoEditar = (producto) => {
+    if (!ventaEditar) return;
+
+    const yaExiste = ventaEditar.productos?.some((item) => item.nombre === producto.nombre);
+    if (yaExiste) {
+      toast.warning("Ese producto ya está en la venta");
+      return;
+    }
+
+    setVentaEditar((prev) => ({
+      ...prev,
+      productos: [
+        ...(prev.productos || []),
+        {
+          nombre: producto.nombre,
+          categoria: producto.categoria,
+          cantidad: "1",
+          precio_total: "",
+        },
+      ],
+    }));
+    setBuscarProductoEdit("");
+    setMostrarProductosEdit(false);
+  };
+
+  const actualizarProductoEditar = (index, campo, valor) => {
+    setVentaEditar((prev) => ({
+      ...prev,
+      productos: prev.productos.map((producto, itemIndex) =>
+        itemIndex === index ? { ...producto, [campo]: valor } : producto
+      ),
+    }));
+  };
+
+  const eliminarProductoEditar = (index) => {
+    setVentaEditar((prev) => ({
+      ...prev,
+      productos: prev.productos.filter((_, itemIndex) => itemIndex !== index),
+    }));
+  };
+
+  const cargarHistorial = async (ventaId) => {
+    setCargandoHistorial(true);
+
+    try {
+      const data = await getHistorialPagos(ventaId);
+      setHistorialPagos(data);
+    } catch {
+      setHistorialPagos([]);
+      toast.error("Error cargando historial");
+    } finally {
+      setCargandoHistorial(false);
+    }
+  };
+
+  const abrirModalDetalle = async (venta) => {
+    setVentaDetalle({ ...venta });
+    setModalDetalle(true);
+
+    if (venta.id) {
+      await cargarHistorial(venta.id);
+    }
+  };
+
+  const cerrarModalDetalle = () => {
+    setModalDetalle(false);
+    setVentaDetalle(null);
+    setHistorialPagos([]);
   };
 
   const guardarEdicion = async () => {
     try {
-      if (
-        !ventaEditar.nombre ||
-        !ventaEditar.apellido ||
-        !ventaEditar.direccion
-      )
+      if (!ventaEditar.nombre || !ventaEditar.apellido || !ventaEditar.direccion) {
         return toast.error("Completa los campos obligatorios");
+      }
 
       if (!ventaEditar.cobrador) return toast.error("Selecciona un cobrador");
+      if (!ventaEditar.productos || ventaEditar.productos.length === 0) {
+        return toast.error("Agrega al menos un producto");
+      }
 
-      if (!productoSeleccionado) return toast.error("Selecciona un producto");
+      const productosInvalidos = ventaEditar.productos.some(
+        (producto) =>
+          !producto.nombre ||
+          Number(producto.cantidad || 0) < 1 ||
+          Number(producto.precio_total || 0) <= 0
+      );
+
+      if (productosInvalidos) {
+        return toast.error("Revisa cantidad y monto de los productos");
+      }
 
       const ventaActualizada = {
         ...ventaEditar,
-        producto: {
-          nombre: productoSeleccionado.nombre,
-          categoria: productoSeleccionado.categoria,
-        },
+        productos: ventaEditar.productos.map((producto) => ({
+          nombre: producto.nombre,
+          categoria: producto.categoria || "otros",
+          cantidad: Number(producto.cantidad || 1),
+          precio_total: Number(producto.precio_total || 0),
+        })),
+        cantidad: ventaEditar.productos.reduce(
+          (total, producto) => total + Number(producto.cantidad || 0),
+          0
+        ),
+        precio_total: ventaEditar.productos.reduce(
+          (total, producto) => total + Number(producto.precio_total || 0),
+          0
+        ),
         cobrador: Number(ventaEditar.cobrador),
       };
 
       await clientesService.actualizar(ventaEditar.id, ventaActualizada);
       await cargarDatos();
-
       setModalEditar(false);
       toast.success("Cliente actualizado");
-    } catch (error) {
+    } catch {
       toast.error("Error al actualizar");
     }
   };
@@ -118,58 +251,87 @@ export const useClientes = () => {
 
     try {
       await clientesService.eliminar(ventaId);
-      setVentas((prev) => prev.filter((v) => v.id !== ventaId));
+      await cargarDatos();
       toast.success("Cliente eliminado");
     } catch {
       toast.error("Error al eliminar");
     }
   };
 
-  // 🔹 FILTROS
-  const ventasFiltradas = useMemo(() => {
-    return ventas.filter((v) => {
-      const matchZona = zonaFiltro === "todas" || v.zona === zonaFiltro;
-      const search = searchTerm.toLowerCase();
+  const exportarExcel = async () => {
+    try {
+      const data = await exportarClientesFiltradosService({
+        search: searchDebounced,
+        zona: zonaFiltro,
+      });
+      exportarExcelUtil(data);
+    } catch {
+      toast.error("Error al exportar clientes");
+    }
+  };
 
-      const matchSearch =
-        v.numero_contrato?.toLowerCase().includes(search) ||
-        v.nombre?.toLowerCase().includes(search) ||
-        v.apellido?.toLowerCase().includes(search) ||
-        v.direccion?.toLowerCase().includes(search) ||
-        v.producto_nombre?.toLowerCase().includes(search);
+  const indiceInicio = totalRegistros === 0 ? 0 : (paginaActual - 1) * registrosPorPagina;
+  const indiceFin = indiceInicio + ventas.length;
 
-      return matchZona && matchSearch;
-    });
-  }, [ventas, searchTerm, zonaFiltro]);
+  const paginaAnterior = () => {
+    if (paginaActual > 1) setPaginaActual((prev) => prev - 1);
+  };
 
-  const exportarExcel = () => exportarExcelUtil(ventasFiltradas);
+  const paginaSiguiente = () => {
+    if (paginaActual < totalPaginas) setPaginaActual((prev) => prev + 1);
+  };
+
+  const irAPagina = (numero) => {
+    if (numero >= 1 && numero <= totalPaginas) setPaginaActual(numero);
+  };
+
+  const cambiarRegistrosPorPagina = (cantidad) => {
+    setRegistrosPorPagina(cantidad);
+    setPaginaActual(1);
+  };
 
   return {
-    ventasFiltradas,
+    ventasFiltradas: ventas,
     exportarExcel,
     cobradores,
     searchTerm,
     zonaFiltro,
     modalEditar,
     ventaEditar,
+    modalDetalle,
+    ventaDetalle,
+    historialPagos,
+    cargandoHistorial,
     productos,
     loading,
     error,
     buscarProductoEdit,
     mostrarProductosEdit,
-    productoSeleccionado,
-
+    paginaActual,
+    totalPaginas,
+    registrosPorPagina,
+    indiceInicio,
+    indiceFin,
+    totalRegistros,
     setSearchTerm,
     setZonaFiltro,
     setModalEditar,
     setVentaEditar,
     setBuscarProductoEdit,
     setMostrarProductosEdit,
-    setProductoSeleccionado,
     cargarDatos,
     cambiarEstadoVenta,
+    abrirModalDetalle,
+    cerrarModalDetalle,
     abrirModalEditar,
     guardarEdicion,
     eliminarVenta,
+    agregarProductoEditar,
+    actualizarProductoEditar,
+    eliminarProductoEditar,
+    paginaAnterior,
+    paginaSiguiente,
+    irAPagina,
+    cambiarRegistrosPorPagina,
   };
 };

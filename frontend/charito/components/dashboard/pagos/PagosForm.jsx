@@ -1,7 +1,12 @@
+import { useRef } from "react"
 import { CheckCircle, Edit2, Trash2, X } from "lucide-react"
 import { usePagos } from "@/src/hooks/usePagos"
 
 export default function PagosForm(props) {
+  const contratoInputRef = useRef(null)
+  const montoInputRef = useRef(null)
+  const registrarPagoButtonRef = useRef(null)
+
   const {
     cobradores,
     fechaPagoBatch,
@@ -22,35 +27,59 @@ export default function PagosForm(props) {
     cancelarEdicion,
   } = props
 
-  return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-4xl mx-auto">
+  const enfocarContrato = () => {
+    contratoInputRef.current?.focus()
+    contratoInputRef.current?.select()
+  }
 
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h1 className="text-4xl font-bold text-indigo-900 mb-2">
+  const handleContratoKeyDown = (e) => {
+    if (e.key !== "Enter" || modoEdicion) return
+    e.preventDefault()
+    montoInputRef.current?.focus()
+    montoInputRef.current?.select()
+  }
+
+  const handleMontoKeyDown = (e) => {
+    if (e.key !== "Enter" || modoEdicion) return
+    e.preventDefault()
+    registrarPagoButtonRef.current?.focus()
+  }
+
+  const handleRegistrarPagoKeyDown = async (e) => {
+    if (e.key !== "Enter" || modoEdicion) return
+    e.preventDefault()
+
+    const registrado = await registrarPago()
+
+    if (registrado) {
+      enfocarContrato()
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-linear-to-br from-slate-100 via-sky-50 to-slate-200 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-6 mb-6">
+          <h1 className="text-4xl font-semibold text-slate-900 mb-2">
             Registro de Pagos
           </h1>
-          <p className="text-gray-600">
+          <p className="text-slate-500">
             Registra, edita o elimina los pagos recibidos de los clientes
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-
-          {/* Título */}
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <CheckCircle className="w-8 h-8 mr-2 text-blue-600" />
+        <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-6">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-6 flex items-center">
+            <CheckCircle className="w-8 h-8 mr-2 text-sky-700" />
             {modoEdicion ? "Editar Pago" : "Registro de Pagos"}
           </h2>
 
-          {/* Banner edición */}
           {modoEdicion && (
-            <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-6 flex items-center justify-between">
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 mb-6 flex items-center justify-between">
               <div>
-                <p className="font-bold text-amber-800">Modo Edición Activo</p>
+                <p className="font-bold text-amber-800">Modo Edicion Activo</p>
                 <p className="text-sm text-amber-700">
-                  Editando último pago: S/ {pagoEditando?.monto} del {pagoEditando?.fecha_pago}
+                  Editando ultimo pago: S/ {pagoEditando?.monto} del {pagoEditando?.fecha_pago}
                 </p>
               </div>
               <button
@@ -63,34 +92,32 @@ export default function PagosForm(props) {
             </div>
           )}
 
-          {/* Configuración de lote */}
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">
-              Configuración de Lote
+          <div className="bg-sky-50 border border-sky-200 rounded-2xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+              Configuracion de Lote
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Fecha de Cobro
                 </label>
                 <input
                   type="date"
                   value={fechaPagoBatch}
                   onChange={(e) => setFechaPagoBatch(e.target.value)}
-                  className="w-full p-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none text-gray-800"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:border-sky-600 focus:outline-none text-slate-800 bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Cobrador
                 </label>
                 <select
                   value={cobradorBatch}
                   onChange={(e) => setCobradorBatch(e.target.value)}
-                  className="w-full p-3 border-2 border-blue-300 rounded-xl focus:border-blue-500 focus:outline-none  text-gray-800"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:border-sky-600 focus:outline-none text-slate-800 bg-white"
                 >
                   <option value="">Seleccionar cobrador</option>
                   {cobradores.map((c) => (
@@ -100,22 +127,19 @@ export default function PagosForm(props) {
                   ))}
                 </select>
               </div>
-
             </div>
           </div>
 
-          {/* Formulario */}
-          <div className="border-2 border-gray-200 rounded-xl p-6">
+          <div className="border border-slate-200 rounded-2xl p-6 bg-slate-50/50">
             <div className="space-y-4">
-
-              {/* Número contrato */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Número de Contrato (Tarjeta)
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Numero de Contrato (Tarjeta)
                 </label>
 
                 <div className="flex gap-2">
                   <input
+                    ref={contratoInputRef}
                     type="text"
                     value={formPago.numeroContrato}
                     onChange={(e) =>
@@ -124,15 +148,16 @@ export default function PagosForm(props) {
                         numeroContrato: e.target.value,
                       })
                     }
+                    onKeyDown={handleContratoKeyDown}
                     disabled={modoEdicion}
-                    className="flex-1 p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none disabled:bg-gray-100  text-gray-800"
+                    className="flex-1 p-3 border border-slate-300 rounded-xl focus:border-sky-600 focus:outline-none disabled:bg-slate-100 text-slate-800 bg-white"
                   />
 
                   {!modoEdicion && (
                     <button
                       onClick={buscarUltimoPago}
                       className="bg-amber-500 text-white px-4 py-3 rounded-xl hover:bg-amber-600 transition"
-                      title="Buscar último pago"
+                      title="Buscar ultimo pago"
                     >
                       <Edit2 className="w-5 h-5" />
                     </button>
@@ -140,36 +165,34 @@ export default function PagosForm(props) {
                 </div>
               </div>
 
-              {/* Info contrato */}
               {contratoActual && (
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <div className="font-semibold text-gray-800">
+                <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                  <div className="font-semibold text-slate-900">
                     {contratoActual.nombre} {contratoActual.apellido}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-slate-500">
                     {contratoActual.producto}
                   </div>
-                  <div className="text-lg font-bold text-red-600 mt-2">
+                  <div className="text-lg font-bold text-rose-600 mt-2">
                     Saldo: S/ {Number(contratoActual.saldo_pendiente).toFixed(2)}
                   </div>
                 </div>
               )}
 
-              {/* Primer pago */}
               {esPrimerPagoContrato && !modoEdicion && (
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-                  <p className="text-sm text-blue-700">
+                <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+                  <p className="text-sm text-sky-700">
                     Este es el primer pago registrado para este contrato.
                   </p>
                 </div>
               )}
 
-              {/* Monto */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Monto del Pago
                 </label>
                 <input
+                  ref={montoInputRef}
                   type="number"
                   value={formPago.monto}
                   onChange={(e) =>
@@ -178,16 +201,16 @@ export default function PagosForm(props) {
                       monto: e.target.value,
                     })
                   }
-                  className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none  text-gray-800"
+                  onKeyDown={handleMontoKeyDown}
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:border-sky-600 focus:outline-none text-slate-800 bg-white"
                 />
               </div>
 
-              {/* Botones */}
               {modoEdicion ? (
                 <div className="grid grid-cols-2 gap-4">
                   <button
                     onClick={editarPago}
-                    className="bg-green-600 text-white p-4 rounded-xl font-semibold hover:bg-green-700 transition"
+                    className="bg-emerald-600 text-white p-4 rounded-xl font-semibold hover:bg-emerald-700 transition"
                   >
                     <Edit2 className="w-5 h-5 inline mr-2" />
                     Guardar Cambios
@@ -204,26 +227,24 @@ export default function PagosForm(props) {
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <button
+                    ref={registrarPagoButtonRef}
                     onClick={registrarPago}
-                    className="w-full bg-blue-600 text-white p-4 rounded-xl text-lg font-semibold hover:bg-blue-700 transition"
+                    onKeyDown={handleRegistrarPagoKeyDown}
+                    className="w-full bg-sky-700 text-white p-4 rounded-xl text-lg font-semibold hover:bg-sky-800 transition focus:outline-none focus:ring-2 focus:ring-sky-300"
                   >
                     <CheckCircle className="w-6 h-6 inline mr-2" />
                     Registrar Pago
                   </button>
                   <button
                     onClick={registrarDescuento}
-                    className="bg-red-500 text-white p-4 rounded-xl text-lg font-semibold hover:bg-red-700 transition"
+                    className="bg-rose-600 text-white p-4 rounded-xl text-lg font-semibold hover:bg-rose-700 transition"
                   >
                     Aplicar Descuento
                   </button>
                 </div>
-
               )}
-
-
             </div>
           </div>
-
         </div>
       </div>
     </div>
