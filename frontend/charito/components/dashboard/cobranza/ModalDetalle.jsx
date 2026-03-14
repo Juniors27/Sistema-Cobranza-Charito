@@ -97,7 +97,7 @@ export default function ModalDetalle({
             </div>
           </div>
 
-          <div className="print-history rounded-[24px] border border-slate-200 bg-white">
+          <div className="print-history rounded-3xl border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-5 py-4">
               <h4 className="text-lg font-semibold text-slate-900">Historial de Pagos</h4>
             </div>

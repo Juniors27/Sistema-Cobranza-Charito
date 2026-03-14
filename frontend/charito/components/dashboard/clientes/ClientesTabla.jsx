@@ -11,6 +11,7 @@ export default function ClientesTabla({
   loading,
   error,
   totalRegistros,
+  cargarDatos,
   ...rest
 }) {
 
@@ -51,7 +52,7 @@ export default function ClientesTabla({
 
       <table className="w-full">
         <thead>
-          <tr className="bg-indigo-50 text-gray-700">
+          <tr className="bg-sky-50 text-gray-700">
             <th className="px-4 py-3 text-left text-sm font-semibold ">Contrato</th>
             <th className="px-4 py-3 text-left text-sm font-semibold ">Cliente</th>
             <th className="px-4 py-3 text-left text-sm font-semibold ">Dirección</th>

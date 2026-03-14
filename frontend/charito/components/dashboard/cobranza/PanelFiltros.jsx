@@ -14,8 +14,8 @@ export default function PanelFiltros({
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 mt-6">
       <div className="flex items-center gap-3 mb-6">
-        <Filter className="w-6 h-6 text-indigo-600" />
-        <h2 className="text-2xl font-bold text-gray-800">
+        <Filter className="w-6 h-6 text-sky-700" />
+        <h2 className="text-2xl font-bold text-slate-900">
           Reporte de Cobranza
         </h2>
       </div>
@@ -25,8 +25,8 @@ export default function PanelFiltros({
           onClick={() => setTipoFecha("simple")}
           className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
             tipoFecha === "simple"
-              ? "bg-indigo-600 text-white"
-              : "bg-gray-200 text-gray-800"
+              ? "bg-sky-700 text-white"
+              : "bg-slate-200 text-slate-800"
           }`}
         >
           Fecha Simple
@@ -35,8 +35,8 @@ export default function PanelFiltros({
           onClick={() => setTipoFecha("rango")}
           className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
             tipoFecha === "rango"
-              ? "bg-indigo-600 text-white"
-              : "bg-gray-200 text-gray-800"
+              ? "bg-sky-700 text-white"
+              : "bg-slate-200 text-slate-800"
           }`}
         >
           Rango de Fechas
@@ -55,7 +55,7 @@ export default function PanelFiltros({
               name="fecha"
               value={filtros.fecha}
               onChange={handleFiltroChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-gray-800"
+              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-800 focus:border-sky-600 focus:outline-none"
             />
           </div>
         ) : (
@@ -69,7 +69,7 @@ export default function PanelFiltros({
                 name="fechaInicio"
                 value={filtros.fechaInicio}
                 onChange={handleFiltroChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-gray-800"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-800 focus:border-sky-600 focus:outline-none"
               />
             </div>
 
@@ -82,7 +82,7 @@ export default function PanelFiltros({
                 name="fechaFin"
                 value={filtros.fechaFin}
                 onChange={handleFiltroChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-gray-800"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-800 focus:border-sky-600 focus:outline-none"
               />
             </div>
           </>
@@ -97,7 +97,7 @@ export default function PanelFiltros({
             name="cobrador"
             value={filtros.cobrador}
             onChange={handleFiltroChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-gray-800"
+            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-slate-800 focus:border-sky-600 focus:outline-none"
           >
             <option value="">Seleccionar cobrador</option>
             {cobradores?.map((c) => (
@@ -112,13 +112,13 @@ export default function PanelFiltros({
       <div className="flex gap-4">
         <button
           onClick={aplicarFiltros}
-          className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+          className="rounded-lg bg-sky-700 px-6 py-2 font-semibold text-white transition-colors hover:bg-sky-800"
         >          
           Aplicar Filtros
         </button>
         <button
           onClick={limpiarFiltros}
-          className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+          className="rounded-lg bg-slate-200 px-6 py-2 font-semibold text-slate-800 transition-colors hover:bg-slate-300"
         >
           Limpiar
         </button>

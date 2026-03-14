@@ -23,20 +23,20 @@ const CobradoresList = ({
         return (
           <div
             key={cobrador.id}
-            className="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 hover:border-purple-300 transition-colors"
+            className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:border-sky-300 hover:bg-white"
           >
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h4 className="font-bold text-gray-800 text-lg">
+                <h4 className="text-lg font-bold text-slate-900">
                   {cobrador.nombre}
                 </h4>
 
-                <p className="text-sm text-gray-600 capitalize flex items-center mt-1">
+                <p className="mt-1 flex items-center text-sm capitalize text-slate-600">
                   <MapPin className="w-4 h-4 mr-1" />
                   {cobrador.zona}
                 </p>
 
-                <p className="text-sm font-semibold text-indigo-600 mt-2">
+                <p className="mt-2 text-sm font-semibold text-sky-700">
                   {cantidadClientes} cliente
                   {cantidadClientes !== 1 ? "s" : ""} activo
                   {cantidadClientes !== 1 ? "s" : ""}
@@ -46,7 +46,7 @@ const CobradoresList = ({
               <div className="flex gap-2">
                 <button
                   onClick={() => onEditar(cobrador)}
-                  className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                  className="rounded-lg bg-sky-100 p-2 text-sky-700 hover:bg-sky-200"
                 >
                   <Edit className="w-4 h-4" />
                 </button>

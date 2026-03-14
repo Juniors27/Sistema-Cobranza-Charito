@@ -5,6 +5,7 @@ import ClientesFiltros from "./ClientesFiltros";
 import ClientesTabla from "./ClientesTabla";
 import ClienteEditModal from "./ClienteEditModal";
 import ClienteDetalleModal from "./ClienteDetalleModal";
+import ClienteDeleteModal from "./ClienteDeleteModal";
 
 export default function ClientesPage() {
   const {
@@ -19,9 +20,12 @@ export default function ClientesPage() {
     modalEditar,
     setModalEditar,
     modalDetalle,
+    modalEliminar,
     ventaDetalle,
+    ventaEliminar,
     historialPagos,
     cargandoHistorial,
+    eliminandoVenta,
     cargarDatos,
     paginaActual,
     totalPaginas,
@@ -86,6 +90,13 @@ export default function ClientesPage() {
           cerrarModalDetalle={restCliente.cerrarModalDetalle}
         />
       )}
+      <ClienteDeleteModal
+        abierto={modalEliminar}
+        venta={ventaEliminar}
+        eliminando={eliminandoVenta}
+        confirmarEliminacion={restCliente.eliminarVenta}
+        cancelarEliminacion={restCliente.cancelarEliminacionVenta}
+      />
     </div>
   );
 }

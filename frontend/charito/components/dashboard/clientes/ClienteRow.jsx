@@ -1,12 +1,12 @@
 import { Edit, Trash2, Package, ArrowDownCircle, Eye } from "lucide-react"
-import { calcularEstadoAutomatico, obtenerColorEstado, formatearFechaDMY} from "@/src/utils/clientesUtils"
+import { calcularEstadoAutomatico, obtenerColorEstado, obtenerFechaReferenciaPago } from "@/src/utils/clientesUtils"
 
 export default function ClienteRow({
     venta,
     abrirModalDetalle,
     abrirModalEditar,
     cambiarEstadoVenta,
-    eliminarVenta,
+    solicitarEliminarVenta,
     //calcularEstadoAutomatico,
     //obtenerColorEstado
 }) {
@@ -36,10 +36,7 @@ export default function ClienteRow({
             <td className="px-4 py-3 text-sm">{venta.dia_cobro}</td>
             <td className="px-4 py-3 text-sm font-semibold">S/ {Number(venta.saldo_pendiente ?? 0).toFixed(2)}</td>
             <td className="px-4 py-3 text-sm">
-                
-                {venta.ultimo_pago_fecha
-                    ? formatearFechaDMY(venta.ultimo_pago_fecha)
-                    : "Sin pagos"}
+                {obtenerFechaReferenciaPago(venta)}
             </td>
 
             {/*  Estado usando obtenerColorEstado */}
@@ -57,7 +54,7 @@ export default function ClienteRow({
                 <div className="flex justify-center gap-2">
                     <button
                         onClick={() => abrirModalDetalle(venta)}
-                        className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200"
+                        className="rounded-lg bg-sky-100 p-2 text-sky-700 hover:bg-sky-200"
                         aria-label={`Ver detalle de ${venta.nombre} ${venta.apellido}`}
                     >
                         <Eye className="w-4 h-4" />
@@ -65,7 +62,7 @@ export default function ClienteRow({
 
                     <button
                         onClick={() => abrirModalEditar(venta)}
-                        className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                        className="rounded-lg bg-sky-100 p-2 text-sky-700 hover:bg-sky-200"
                     >
                         <Edit className="w-4 h-4" />
                     </button>
@@ -90,14 +87,14 @@ export default function ClienteRow({
                         disabled={venta.estado === "cancelado"}
                         className={`p-2 rounded-lg ${venta.estado === "cancelado"
                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                            : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                             }`}
                     >
                         <ArrowDownCircle className="w-4 h-4" />
                     </button>
 
                     <button
-                        onClick={() => eliminarVenta(venta.id)}
+                        onClick={() => solicitarEliminarVenta(venta)}
                         className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                     >
                         <Trash2 className="w-4 h-4" />

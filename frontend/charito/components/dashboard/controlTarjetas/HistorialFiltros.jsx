@@ -9,9 +9,17 @@ export default function HistorialFiltros({
   setFiltro,
   clientesControlar,
   buenosPagadores,
+  clientesPromesaVencida,
   ventasFiltradas,
   controlTarjetasExcel
 }) {
+  const conteos = {
+    todos: clientesControlar.length + buenosPagadores.length,
+    controlar: clientesControlar.length,
+    buenos: buenosPagadores.length,
+    promesas_vencidas: clientesPromesaVencida.length,
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 text-gray-700">
       <div className="flex flex-col gap-4 ">
@@ -23,27 +31,21 @@ export default function HistorialFiltros({
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-            <Clock className="w-8 h-8 mr-2 text-red-600" />
+            <Clock className="w-8 h-8 mr-2 text-sky-700" />
             Control de Cobranza
           </h2>
 
           <div className="flex gap-2 flex-wrap">
-            {["todos", "controlar", "buenos"].map((tipo) => (
+            {["todos", "controlar", "buenos", "promesas_vencidas"].map((tipo) => (
               <button
                 key={tipo}
                 onClick={() => setFiltro(tipo)}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${filtro === tipo
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-sky-700 text-white"
+                  : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                   }`}
               >
-                {tipo.toUpperCase()} (
-                {tipo === "todos"
-                  ? clientesControlar.length + buenosPagadores.length
-                  : tipo === "controlar"
-                    ? clientesControlar.length
-                    : buenosPagadores.length}
-                )
+                {tipo === "promesas_vencidas" ? "PROMESAS VENCIDAS" : tipo.toUpperCase()} ({conteos[tipo]})
               </button>
             ))}
 

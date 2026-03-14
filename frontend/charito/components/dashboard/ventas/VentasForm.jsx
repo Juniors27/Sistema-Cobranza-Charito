@@ -401,6 +401,7 @@ const VentasForm = () => {
                   checked={formVenta.dioInicial || false}
                   onChange={(e) => {
                     const checked = e.target.checked
+                    setMostrarSaldo(checked)
                     setFormVenta((prev) => ({
                       ...prev,
                       dioInicial: checked,
@@ -426,9 +427,8 @@ const VentasForm = () => {
                         ...prev,
                         inicial: e.target.value.replace(/[^0-9]/g, ""),
                       }))
-                      setMostrarSaldo(false)
+                      setMostrarSaldo(true)
                     }}
-                    onBlur={() => setMostrarSaldo(true)}
                     className="w-full rounded-xl border border-sky-300 bg-white p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
                   />
 

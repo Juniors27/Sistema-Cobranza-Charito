@@ -4,6 +4,11 @@ from charito.views.cobrador import CobradorViewSet, CobradorListView
 from charito.views.venta import VentaViewSet, VentaListView, ValidarContratoView, ProgramacionPrimerCobroView
 from charito.views.cliente import ListaClientesView
 from charito.views.pago import RegistrarPagoView, ListarPagosView, ReporteCobranzaView, HistorialPagosVentaView, EditarPagoView, EliminarPagoView, ObtenerUltimoPagoView
+from charito.views.observacion_control import (
+    ObservacionControlDetalleView,
+    ObservacionesControlListView,
+    ObservacionesControlView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,10 +29,13 @@ urlpatterns = [
     path('api/ventas/<int:pk>/programacion-primer-cobro/', ProgramacionPrimerCobroView.as_view(), name='venta-programacion-primer-cobro'),
     path('api/historial-pagos/<int:venta_id>/', HistorialPagosVentaView.as_view(), name='historial-pagos'),
     
-     # 🆕 Nuevas rutas para editar y eliminar pagos
+     #Nuevas rutas para editar y eliminar pagos
     path('api/pagos/<int:pago_id>/editar/', EditarPagoView.as_view(), name='editar-pago'),
     path('api/pagos/<int:pago_id>/eliminar/', EliminarPagoView.as_view(), name='eliminar-pago'),
     path('api/pagos/ultimo/<str:numero_contrato>/', ObtenerUltimoPagoView.as_view(), name='obtener-ultimo-pago'),
+    path('api/control-observaciones/', ObservacionesControlListView.as_view(), name='control-observaciones-lista'),
+    path('api/control-observaciones/<int:venta_id>/', ObservacionesControlView.as_view(), name='control-observaciones'),
+    path('api/control-observaciones/detalle/<int:observacion_id>/', ObservacionControlDetalleView.as_view(), name='control-observaciones-detalle'),
 ]
      
 

@@ -6,14 +6,19 @@ import {
   CalendarDays,
   CheckCheck,
   ClipboardList,
+  Download,
   Filter,
+  Flame,
   MapPin,
+  ShieldAlert,
   UserCheck,
   Users,
   XCircle,
 } from "lucide-react"
 import { LoadingScreen, ErrorScreen, SectionHeader } from "@/components/ui"
 import { useDashboard } from "@/src/hooks/useDashboard"
+import { exportarClientesCriticosExcel } from "@/src/utils/dashboardUtils"
+import { toast } from "sonner"
 
 const periodos = [
   { id: "semana_laboral", label: "Semana Laboral" },
@@ -276,6 +281,135 @@ function PanelPrimerosCobros({
   )
 }
 
+function PanelClientesCriticos({ resumenClientesCriticos }) {
+  const { total, saldoTotal, cobradoresComprometidos, top, lista } = resumenClientesCriticos
+  const [mostrarTodos, setMostrarTodos] = useState(false)
+
+  const clientesVisibles = mostrarTodos ? lista : top
+
+  const exportarExcel = () => {
+    const exportado = exportarClientesCriticosExcel(lista)
+    if (exportado) {
+      toast.success("Excel de clientes criticos exportado")
+    } else {
+      toast.error("No hay clientes criticos para exportar")
+    }
+  }
+
+  return (
+    <section className="rounded-[28px] border border-rose-200 bg-linear-to-br from-white to-rose-50 p-6 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h2 className="flex items-center gap-3 text-xl font-semibold text-slate-900 md:text-2xl">
+            <ShieldAlert className="h-7 w-7 text-rose-700" />
+            Clientes criticos
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+            Contratos con atraso severo segun su frecuencia real de pago. Este bloque muestra los casos mas delicados para seguimiento inmediato.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setMostrarTodos((prev) => !prev)}
+            className="rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100"
+          >
+            {mostrarTodos ? "Ver top 5" : `Ver todos (${total})`}
+          </button>
+          <button
+            onClick={exportarExcel}
+            className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-700"
+          >
+            <Download className="h-4 w-4" />
+            Exportar Excel
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <article className="rounded-2xl border border-rose-200 bg-white px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-500">
+            Casos criticos
+          </div>
+          <div className="mt-3 text-3xl font-semibold text-slate-900">{total}</div>
+        </article>
+
+        <article className="rounded-2xl border border-amber-200 bg-white px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-600">
+            Saldo expuesto
+          </div>
+          <div className="mt-3 text-3xl font-semibold text-slate-900">
+            S/ {saldoTotal.toFixed(2)}
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Cobradores comprometidos
+          </div>
+          <div className="mt-3 text-3xl font-semibold text-slate-900">
+            {cobradoresComprometidos}
+          </div>
+        </article>
+      </div>
+
+      {lista.length === 0 ? (
+        <div className="mt-5 rounded-2xl border border-dashed border-rose-200 bg-white px-6 py-10 text-center text-slate-500">
+          No hay clientes criticos segun los umbrales actuales del modelo.
+        </div>
+      ) : (
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-rose-100 bg-white">
+          <table className="w-full min-w-[920px] text-sm">
+            <thead className="bg-rose-50 text-slate-700">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold">Contrato</th>
+                <th className="px-4 py-3 text-left font-semibold">Cliente</th>
+                <th className="px-4 py-3 text-left font-semibold">Cobrador</th>
+                <th className="px-4 py-3 text-left font-semibold">Frecuencia</th>
+                <th className="px-4 py-3 text-left font-semibold">Ultimo movimiento</th>
+                <th className="px-4 py-3 text-left font-semibold">Atraso</th>
+                <th className="px-4 py-3 text-right font-semibold">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clientesVisibles.map((cliente, index) => (
+                <tr key={cliente.id} className="border-t border-rose-100">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-slate-900">{cliente.numero_contrato}</div>
+                    <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-700">
+                      <Flame className="h-3.5 w-3.5" />
+                      #{(mostrarTodos ? lista : top).findIndex((item) => item.id === cliente.id) + 1} prioridad
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <div className="font-medium text-slate-900">{cliente.cliente}</div>
+                    <div className="text-xs capitalize text-slate-500">
+                      {cliente.zona} · {cliente.direccion || "Sin direccion"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">{cliente.cobrador_nombre || "Sin asignar"}</td>
+                  <td className="px-4 py-3 capitalize text-slate-700">{cliente.frecuencia_pago}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {cliente.fecha_ultimo_movimiento
+                      ? formatearFecha(cliente.fecha_ultimo_movimiento)
+                      : "Sin pagos"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-rose-700">{cliente.atraso_texto}</div>
+                    <div className="text-xs text-slate-500">{cliente.dias_atraso} dias acumulados</div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-slate-900">
+                    S/ {cliente.saldo_pendiente.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  )
+}
+
 export default function DashboardContent() {
   const {
     ventasActivas,
@@ -285,6 +419,7 @@ export default function DashboardContent() {
     contratosPrimerCobroPeriodo,
     primerosCobrosPorCobrador,
     contratosPendientesProgramacion,
+    resumenClientesCriticos,
     periodo,
     setPeriodo,
     fechaInicio,
@@ -435,6 +570,8 @@ export default function DashboardContent() {
         marcarEntregaCobrador={marcarEntregaCobrador}
         guardandoProgramacionId={guardandoProgramacionId}
       />
+
+      <PanelClientesCriticos resumenClientesCriticos={resumenClientesCriticos} />
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl md:text-2xl font-semibold text-slate-900 mb-5 flex items-center">

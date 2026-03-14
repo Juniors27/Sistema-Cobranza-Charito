@@ -3,6 +3,7 @@ import { usePaginacion } from "@/src/hooks/usePaginacion";
 import { Paginacion, SectionHeader } from "@/components/ui";
 import HistorialFiltros from "./HistorialFiltros"
 import HistorialTabla from "./HistorialTabla"
+import ObservacionesControlModal from "./ObservacionesControlModal"
 import { useControlTarjetas } from "@/src/hooks/useControlTarjetas";
 
 export default function HistorialPage() {
@@ -10,6 +11,7 @@ export default function HistorialPage() {
     ventasFiltradas,
     clientesControlar,
     buenosPagadores,
+    clientesPromesaVencida,
     cobradores,
     loading,
     error,
@@ -18,11 +20,26 @@ export default function HistorialPage() {
     ventas,
     pagos,
     obtenerUltimoPago,
+    obtenerAlertaPromesa,
     calcularEstadoAutomatico,
     esBuenPagador,
+    modalObservacionesAbierto,
+    ventaObservaciones,
+    observacionesControl,
+    cargandoObservaciones,
+    guardandoObservacion,
+    editandoObservacionId,
+    formObservacion,
     cargarDatos,
+    abrirModalObservaciones,
+    cerrarModalObservaciones,
+    guardarObservacion,
+    iniciarEdicionObservacion,
+    cancelarEdicionObservacion,
+    borrarObservacion,
     setSearchTerm,
     setFiltro,
+    setFormObservacion,
     controlTarjetasExcel,
   } = useControlTarjetas();
 
@@ -56,6 +73,7 @@ export default function HistorialPage() {
           setFiltro={setFiltro}
           clientesControlar={clientesControlar}
           buenosPagadores={buenosPagadores}
+          clientesPromesaVencida={clientesPromesaVencida}
           ventas={ventas}
           pagos={pagos}
           controlTarjetasExcel={controlTarjetasExcel}
@@ -76,6 +94,9 @@ export default function HistorialPage() {
             calcularEstadoAutomatico={calcularEstadoAutomatico}
             esBuenPagador={esBuenPagador}
             obtenerUltimoPago={obtenerUltimoPago}
+            obtenerAlertaPromesa={obtenerAlertaPromesa}
+            abrirModalObservaciones={abrirModalObservaciones}
+            cargarDatos={cargarDatos}
           />
           {totalPaginas > 1 && (
             <Paginacion
@@ -88,6 +109,22 @@ export default function HistorialPage() {
           )}
         </div>
       </div>
+
+      <ObservacionesControlModal
+        abierto={modalObservacionesAbierto}
+        venta={ventaObservaciones}
+        observaciones={observacionesControl}
+        cargando={cargandoObservaciones}
+        guardando={guardandoObservacion}
+        editandoObservacionId={editandoObservacionId}
+        formObservacion={formObservacion}
+        setFormObservacion={setFormObservacion}
+        guardarObservacion={guardarObservacion}
+        iniciarEdicionObservacion={iniciarEdicionObservacion}
+        cancelarEdicionObservacion={cancelarEdicionObservacion}
+        borrarObservacion={borrarObservacion}
+        onClose={cerrarModalObservaciones}
+      />
     </div>
   )
 }

@@ -56,6 +56,15 @@ export default function PagosForm(props) {
     }
   }
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return null
+
+    const [anio, mes, dia] = fecha.split("-")
+    if (!anio || !mes || !dia) return fecha
+
+    return `${dia}-${mes}-${anio}`
+  }
+
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-100 via-sky-50 to-slate-200 p-4">
       <div className="max-w-4xl mx-auto">
@@ -171,7 +180,9 @@ export default function PagosForm(props) {
                     {contratoActual.nombre} {contratoActual.apellido}
                   </div>
                   <div className="text-sm text-slate-500">
-                    {contratoActual.producto}
+                    {contratoActual.ultimo_pago_fecha
+                      ? `Fecha ultimo pago: ${formatearFecha(contratoActual.ultimo_pago_fecha)} | Monto: S/ ${Number(contratoActual.ultimo_pago_monto || 0).toFixed(2)}`
+                      : "Sin pagos registrados aun"}
                   </div>
                   <div className="text-lg font-bold text-rose-600 mt-2">
                     Saldo: S/ {Number(contratoActual.saldo_pendiente).toFixed(2)}

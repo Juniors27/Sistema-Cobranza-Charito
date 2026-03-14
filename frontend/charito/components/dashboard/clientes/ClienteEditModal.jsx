@@ -143,7 +143,7 @@ export default function ClienteEditModal({
                       <div
                         key={producto.id}
                         onClick={() => agregarProductoEditar(producto)}
-                        className="cursor-pointer p-3 hover:bg-indigo-50"
+                        className="cursor-pointer p-3 hover:bg-sky-50"
                       >
                         {producto.nombre}
                       </div>
@@ -280,7 +280,7 @@ export default function ClienteEditModal({
         <div className="mt-6 flex gap-4">
           <button
             onClick={guardarEdicion}
-            className="flex-1 rounded-xl bg-indigo-600 p-3 font-semibold text-white hover:bg-indigo-700"
+            className="flex-1 rounded-xl bg-sky-700 p-3 font-semibold text-white hover:bg-sky-800"
           >
             Guardar Cambios
           </button>

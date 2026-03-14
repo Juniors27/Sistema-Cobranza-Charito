@@ -1,6 +1,13 @@
 // src/config/utils/dashboardUtils.js
+import * as XLSX from "xlsx"
 
 const FECHAS_INICIO_PROGRAMACION = ["2026-03-12", "2026-03-13"]
+const MILISEGUNDOS_POR_DIA = 1000 * 60 * 60 * 24
+const LIMITE_CRITICO = {
+  semanal: 28,
+  quincenal: 60,
+  mensual: 90,
+}
 
 const normalizarFecha = (fecha) => {
   if (!fecha) return null
@@ -21,6 +28,99 @@ const ordenarPorFecha = (fechaA, fechaB) => {
   if (!dateB) return -1
 
   return dateA - dateB
+}
+
+const formatearFechaDashboard = (fecha) => {
+  if (!fecha) return "No definida"
+
+  const [year, month, day] = String(fecha).split("-")
+  if (!year || !month || !day) return fecha
+
+  return `${day}/${month}/${year}`
+}
+
+const diferenciaEnDias = (fechaInicio, fechaFin) => {
+  const inicio = new Date(fechaInicio)
+  const fin = new Date(fechaFin)
+  inicio.setHours(0, 0, 0, 0)
+  fin.setHours(0, 0, 0, 0)
+  return Math.floor((fin - inicio) / MILISEGUNDOS_POR_DIA)
+}
+
+const sumarMesesRespetandoFinDeMes = (fecha, cantidadMeses) => {
+  const base = new Date(fecha)
+  const diaOriginal = base.getDate()
+  const primerDiaMesObjetivo = new Date(
+    base.getFullYear(),
+    base.getMonth() + cantidadMeses,
+    1
+  )
+  const ultimoDiaMesObjetivo = new Date(
+    primerDiaMesObjetivo.getFullYear(),
+    primerDiaMesObjetivo.getMonth() + 1,
+    0
+  ).getDate()
+
+  return new Date(
+    primerDiaMesObjetivo.getFullYear(),
+    primerDiaMesObjetivo.getMonth(),
+    Math.min(diaOriginal, ultimoDiaMesObjetivo)
+  )
+}
+
+const calcularMesesCompletos = (fechaInicio, fechaFin) => {
+  let meses = 0
+
+  while (true) {
+    const siguiente = sumarMesesRespetandoFinDeMes(fechaInicio, meses + 1)
+    if (siguiente <= fechaFin) {
+      meses += 1
+      continue
+    }
+    break
+  }
+
+  return meses
+}
+
+const pluralizar = (valor, singular, plural) =>
+  `${valor} ${valor === 1 ? singular : plural}`
+
+const formatearAtrasoSegunFrecuencia = (dias, frecuenciaPago, fechaReferencia) => {
+  if (dias <= 0) return "Hoy"
+
+  if (frecuenciaPago === "semanal") {
+    if (dias < 7) return pluralizar(dias, "dia", "dias")
+    const semanas = Math.floor(dias / 7)
+    const diasRestantes = dias % 7
+    return diasRestantes > 0
+      ? `${pluralizar(semanas, "semana", "semanas")} y ${pluralizar(diasRestantes, "dia", "dias")}`
+      : pluralizar(semanas, "semana", "semanas")
+  }
+
+  if (frecuenciaPago === "quincenal") {
+    if (dias < 15) return pluralizar(dias, "dia", "dias")
+    const quincenas = Math.floor(dias / 15)
+    const diasRestantes = dias % 15
+    return diasRestantes > 0
+      ? `${pluralizar(quincenas, "quincena", "quincenas")} y ${pluralizar(diasRestantes, "dia", "dias")}`
+      : pluralizar(quincenas, "quincena", "quincenas")
+  }
+
+  if (frecuenciaPago === "mensual") {
+    const hoy = new Date()
+    const meses = calcularMesesCompletos(fechaReferencia, hoy)
+
+    if (meses < 1) return pluralizar(dias, "dia", "dias")
+
+    const fechaAncla = sumarMesesRespetandoFinDeMes(fechaReferencia, meses)
+    const diasRestantes = diferenciaEnDias(fechaAncla, hoy)
+    return diasRestantes > 0
+      ? `${pluralizar(meses, "mes", "meses")} y ${pluralizar(diasRestantes, "dia", "dias")}`
+      : pluralizar(meses, "mes", "meses")
+  }
+
+  return pluralizar(dias, "dia", "dias")
 }
 
 const obtenerSemanaLaboral = (referencia = new Date()) => {
@@ -93,6 +193,18 @@ const obtenerUltimoPagoPorVenta = (pagos) => {
   })
 
   return ultimoPagoPorVenta
+}
+
+const obtenerFechaReferenciaCobranza = (venta, ultimoPago) => {
+  if (ultimoPago?.fecha_pago) return normalizarFecha(ultimoPago.fecha_pago)
+  if (venta.fecha_inicial) return normalizarFecha(venta.fecha_inicial)
+  return normalizarFecha(venta.fecha_venta)
+}
+
+const obtenerFechaUltimoMovimiento = (venta, ultimoPago) => {
+  if (ultimoPago?.fecha_pago) return ultimoPago.fecha_pago
+  if (venta.fecha_inicial) return venta.fecha_inicial
+  return null
 }
 
 export const obtenerEtiquetaPeriodoDashboard = (
@@ -251,6 +363,60 @@ export const calcularMetricasDashboard = (
     }))
     .sort((a, b) => ordenarPorFecha(a.fecha_venta, b.fecha_venta))
 
+  const clientesCriticos = ventasActivas
+    .map((venta) => {
+      const ultimoPago = ultimoPagoPorVenta.get(venta.id)
+      const fechaReferencia = obtenerFechaReferenciaCobranza(venta, ultimoPago)
+      const fechaUltimoMovimiento = obtenerFechaUltimoMovimiento(venta, ultimoPago)
+
+      if (!fechaReferencia) return null
+
+      const diasAtraso = diferenciaEnDias(fechaReferencia, new Date())
+      const limiteCritico = LIMITE_CRITICO[venta.frecuencia_pago] ?? 9999
+
+      if (diasAtraso < limiteCritico) return null
+
+      return {
+        id: venta.id,
+        numero_contrato: venta.numero_contrato,
+        cliente: venta.cliente || `${venta.nombre} ${venta.apellido}`,
+        direccion: venta.direccion,
+        zona: venta.zona,
+        cobrador_nombre: venta.cobrador_nombre,
+        saldo_pendiente: Number(venta.saldo_pendiente || 0),
+        frecuencia_pago: venta.frecuencia_pago,
+        dias_atraso: diasAtraso,
+        atraso_texto: formatearAtrasoSegunFrecuencia(
+          diasAtraso,
+          venta.frecuencia_pago,
+          fechaReferencia
+        ),
+        fecha_ultimo_movimiento: fechaUltimoMovimiento,
+        severidad: diasAtraso - limiteCritico,
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (b.severidad !== a.severidad) return b.severidad - a.severidad
+      if (b.saldo_pendiente !== a.saldo_pendiente) {
+        return b.saldo_pendiente - a.saldo_pendiente
+      }
+      return String(a.numero_contrato).localeCompare(String(b.numero_contrato))
+    })
+
+  const resumenClientesCriticos = {
+    total: clientesCriticos.length,
+    saldoTotal: clientesCriticos.reduce(
+      (total, cliente) => total + cliente.saldo_pendiente,
+      0
+    ),
+    cobradoresComprometidos: new Set(
+      clientesCriticos.map((cliente) => cliente.cobrador_nombre).filter(Boolean)
+    ).size,
+    top: clientesCriticos.slice(0, 5),
+    lista: clientesCriticos,
+  }
+
   return {
     ventasActivas,
     clientesPorZona,
@@ -259,5 +425,32 @@ export const calcularMetricasDashboard = (
     contratosPrimerCobroPeriodo,
     primerosCobrosPorCobrador,
     contratosPendientesProgramacion,
+    resumenClientesCriticos,
   }
+}
+
+export const exportarClientesCriticosExcel = (clientesCriticos) => {
+  if (!Array.isArray(clientesCriticos) || clientesCriticos.length === 0) {
+    return false
+  }
+
+  const data = clientesCriticos.map((cliente, index) => ({
+    Prioridad: index + 1,
+    Contrato: cliente.numero_contrato,
+    Cliente: cliente.cliente,
+    Cobrador: cliente.cobrador_nombre || "Sin asignar",
+    Zona: cliente.zona,
+    Direccion: cliente.direccion || "",
+    "Ultimo movimiento": cliente.fecha_ultimo_movimiento
+      ? formatearFechaDashboard(cliente.fecha_ultimo_movimiento)
+      : "Sin pagos",
+    Atraso: cliente.atraso_texto,
+    "Saldo pendiente": cliente.saldo_pendiente.toFixed(2),
+  }))
+
+  const worksheet = XLSX.utils.json_to_sheet(data)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes Criticos")
+  XLSX.writeFile(workbook, "clientes_criticos_dashboard.xlsx")
+  return true
 }

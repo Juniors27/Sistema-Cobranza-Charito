@@ -24,6 +24,18 @@ export const formatearFechaDMY = (fecha) => {
   return `${d}/${m}/${y}`;
 };
 
+export const obtenerFechaReferenciaPago = (venta) => {
+  if (venta?.ultimo_pago_fecha) {
+    return formatearFechaDMY(venta.ultimo_pago_fecha)
+  }
+
+  if (venta?.fecha_inicial) {
+    return formatearFechaDMY(venta.fecha_inicial)
+  }
+
+  return "Sin pagos"
+}
+
 
 
 //CALCULA EL ESTADO AUTOMATICO DE L CONTRATO
@@ -74,9 +86,7 @@ export const obtenerColorEstado = (estado) => {
     }
 
     const data = ventasFiltradas.map((venta) => {
-      const ultimoPago = venta.ultimo_pago_fecha
-        ? formatearFechaDMY(venta.ultimo_pago_fecha)
-        : "Sin pagos"
+      const ultimoPago = obtenerFechaReferenciaPago(venta)
 
       return {
         Contrato: venta.numero_contrato,

@@ -33,4 +33,10 @@ export const API = {
     eliminarPago: `${API_BASE_URL}/pagos/`,
     lista:`${API_BASE_URL}/pagos/`,
   },
+
+  control: {
+    observacionesLista: `${API_BASE_URL}/control-observaciones/`,
+    observaciones: (ventaId) => `${API_BASE_URL}/control-observaciones/${ventaId}/`,
+    observacionDetalle: (observacionId) => `${API_BASE_URL}/control-observaciones/detalle/${observacionId}/`,
+  },
 }

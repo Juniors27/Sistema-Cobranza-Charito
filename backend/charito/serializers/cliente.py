@@ -53,6 +53,7 @@ class ClienteListSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.SerializerMethodField()
     cobrador_nombre = serializers.CharField(source="cobrador.nombre", read_only=True)
     ultimo_pago_fecha = serializers.DateField(read_only=True, allow_null=True)
+    fecha_inicial = serializers.SerializerMethodField()
 
     class Meta:
         model = Venta
@@ -73,6 +74,7 @@ class ClienteListSerializer(serializers.ModelSerializer):
             "saldo_pendiente",
             "frecuencia_pago",
             "dia_cobro",
+            "fecha_inicial",
             "estado",
             "cobrador",
             "cobrador_nombre",
@@ -81,3 +83,12 @@ class ClienteListSerializer(serializers.ModelSerializer):
 
     def get_producto_nombre(self, obj):
         return obj.obtener_productos_resumen()
+
+    def get_fecha_inicial(self, obj):
+        if obj.fecha_inicial:
+            return obj.fecha_inicial
+
+        if obj.inicial and obj.inicial > 0:
+            return obj.fecha_venta
+
+        return None

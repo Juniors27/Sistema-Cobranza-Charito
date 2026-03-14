@@ -26,7 +26,7 @@ const CobradorForm = ({
             onChange={(e) =>
               setForm({ ...form, nombre: e.target.value })
             }
-            className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none text-gray-800"
+            className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
           />
         </div>
 
@@ -39,7 +39,7 @@ const CobradorForm = ({
             onChange={(e) =>
               setForm({ ...form, zona: e.target.value })
             }
-            className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none text-gray-800"
+            className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
           >
             <option value="milagro">Milagro</option>
             <option value="huanchaco">Huanchaco</option>
@@ -49,7 +49,7 @@ const CobradorForm = ({
 
         <button
           onClick={onGuardar}
-          className="w-full bg-purple-600 text-white p-4 rounded-xl text-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center"
+          className="flex w-full items-center justify-center rounded-xl bg-sky-700 p-4 text-lg font-semibold text-white transition-colors hover:bg-sky-800"
         >
           <Plus className="w-6 h-6 mr-2" />
           {editando ? "Guardar Cambios" : "Agregar Cobrador"}
@@ -58,7 +58,7 @@ const CobradorForm = ({
         {editando && (
           <button
             onClick={onCancelar}
-            className="w-full bg-gray-400 text-white p-4 rounded-xl text-lg font-semibold hover:bg-gray-500 transition-colors"
+            className="w-full rounded-xl bg-slate-300 p-4 text-lg font-semibold text-slate-800 transition-colors hover:bg-slate-400"
           >
             Cancelar Edición
           </button>

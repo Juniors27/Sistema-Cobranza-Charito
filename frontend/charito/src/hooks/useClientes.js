@@ -31,6 +31,9 @@ export const useClientes = () => {
   const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
   const [totalRegistros, setTotalRegistros] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [ventaEliminar, setVentaEliminar] = useState(null);
+  const [eliminandoVenta, setEliminandoVenta] = useState(false);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -246,15 +249,29 @@ export const useClientes = () => {
     }
   };
 
-  const eliminarVenta = async (ventaId) => {
-    if (!confirm("¿Eliminar cliente y pagos?")) return;
+  const solicitarEliminarVenta = (venta) => {
+    setVentaEliminar(venta);
+    setModalEliminar(true);
+  };
+
+  const cancelarEliminacionVenta = () => {
+    setModalEliminar(false);
+    setVentaEliminar(null);
+  };
+
+  const eliminarVenta = async () => {
+    if (!ventaEliminar?.id) return;
 
     try {
-      await clientesService.eliminar(ventaId);
+      setEliminandoVenta(true);
+      await clientesService.eliminar(ventaEliminar.id);
       await cargarDatos();
+      cancelarEliminacionVenta();
       toast.success("Cliente eliminado");
     } catch {
       toast.error("Error al eliminar");
+    } finally {
+      setEliminandoVenta(false);
     }
   };
 
@@ -299,7 +316,9 @@ export const useClientes = () => {
     modalEditar,
     ventaEditar,
     modalDetalle,
+    modalEliminar,
     ventaDetalle,
+    ventaEliminar,
     historialPagos,
     cargandoHistorial,
     productos,
@@ -313,6 +332,7 @@ export const useClientes = () => {
     indiceInicio,
     indiceFin,
     totalRegistros,
+    eliminandoVenta,
     setSearchTerm,
     setZonaFiltro,
     setModalEditar,
@@ -325,6 +345,8 @@ export const useClientes = () => {
     cerrarModalDetalle,
     abrirModalEditar,
     guardarEdicion,
+    solicitarEliminarVenta,
+    cancelarEliminacionVenta,
     eliminarVenta,
     agregarProductoEditar,
     actualizarProductoEditar,

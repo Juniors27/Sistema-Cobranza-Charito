@@ -15,13 +15,13 @@ export default function TablaResultados({
 
   return (
     <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-      <h3 className="text-2xl font-bold text-gray-800 mb-4">
+      <h3 className="text-2xl font-bold text-slate-900 mb-4">
         Pagos Filtrados ({data.length})
       </h3>
 
-      <div className="bg-linear-to-r from-indigo-50 to-blue-50 p-4 rounded-lg border border-indigo-200 mb-4">
-        <p className="text-sm text-gray-600">Total Dinero Ingresado</p>
-        <p className="text-3xl font-bold text-indigo-600">
+      <div className="mb-4 rounded-lg border border-sky-200 bg-linear-to-r from-sky-50 to-slate-50 p-4">
+        <p className="text-sm text-slate-600">Total Dinero Ingresado</p>
+        <p className="text-3xl font-bold text-sky-700">
           S/ {calcularTotalMonto(data).toFixed(2)}
         </p>
       </div>
@@ -34,7 +34,7 @@ export default function TablaResultados({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por contrato o nombre del cliente"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-600 text-gray-800"
+            className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-4 text-slate-800 focus:border-sky-600 focus:outline-none"
           />
         </div>
 
@@ -48,7 +48,7 @@ export default function TablaResultados({
         <div className="overflow-x-auto rounded-xl border border-gray-100">
           <table className="w-full">
             <thead>
-              <tr className="bg-indigo-50 text-indigo-900">
+              <tr className="bg-sky-50 text-slate-900">
                 <th className="text-left py-4 px-6 font-semibold">Tarjeta</th>
                 <th className="text-center py-4 px-6 font-semibold">Cliente</th>
                 <th className="text-center py-4 px-6 font-semibold">Estado</th>
@@ -92,7 +92,7 @@ export default function TablaResultados({
                     </td>
                     <td className="text-center">
                       <button onClick={() => abrirModal(pago)}>
-                        <Eye className="w-5 h-5 text-indigo-600" />
+                        <Eye className="w-5 h-5 text-sky-700" />
                       </button>
                     </td>
                   </tr>
