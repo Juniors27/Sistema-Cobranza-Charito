@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.db.models import Sum
 from rest_framework import serializers
 from ..models.venta import Venta, VentaItem
 from ..models.producto import Producto
@@ -125,6 +126,21 @@ class VentaSerializer(serializers.ModelSerializer):
             data["cantidad"] = total_cantidad
             data["precio_total"] = total_precio
 
+        if self.instance and ("monto" in data or "inicial" in data):
+            pagos_total = (
+                self.instance.pagos.aggregate(total=Sum("monto")).get("total")
+                or Decimal("0.00")
+            )
+            saldo_recalculado = monto - inicial - pagos_total
+
+            if saldo_recalculado < 0:
+                raise serializers.ValidationError({
+                    "monto": (
+                        "El monto no puede ser menor a lo ya cobrado "
+                        f"(inicial + pagos = S/ {(inicial + pagos_total):.2f})"
+                    )
+                })
+
         return data
 
     def create(self, validated_data):
@@ -163,9 +179,20 @@ class VentaSerializer(serializers.ModelSerializer):
         if "monto" in validated_data or "inicial" in validated_data:
             monto = validated_data.get("monto", instance.monto)
             inicial = validated_data.get("inicial", instance.inicial)
-            validated_data["saldo_pendiente"] = monto - inicial
+            pagos_total = (
+                instance.pagos.aggregate(total=Sum("monto")).get("total")
+                or Decimal("0.00")
+            )
+            validated_data["saldo_pendiente"] = monto - inicial - pagos_total
 
         instance = super().update(instance, validated_data)
+
+        if instance.saldo_pendiente == 0:
+            instance.estado = "cancelado"
+            instance.save(update_fields=["estado"])
+        elif instance.saldo_pendiente > 0 and instance.estado == "cancelado":
+            instance.estado = "controlar"
+            instance.save(update_fields=["estado"])
 
         if productos_data:
             instance.producto = productos_data[0]["producto"]
