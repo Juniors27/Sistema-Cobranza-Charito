@@ -1,11 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import {
-  CalendarClock,
   CalendarDays,
-  CheckCheck,
-  ClipboardList,
   Download,
   Filter,
   Flame,
@@ -34,251 +31,6 @@ const formatearFecha = (fecha) => {
   if (!year || !month || !day) return fecha
 
   return `${day}/${month}/${year}`
-}
-
-function PanelProgramacionPrimerCobro({
-  contratosPendientesProgramacion,
-  guardarFechaPrimerCobro,
-  guardandoProgramacionId,
-}) {
-  const [fechasPorContrato, setFechasPorContrato] = useState({})
-
-  const valorFecha = (contratoId) => fechasPorContrato[contratoId] || ""
-
-  if (contratosPendientesProgramacion.length === 0) {
-    return null
-  }
-
-  return (
-    <section className="rounded-[28px] border border-amber-200 bg-linear-to-br from-white to-amber-50 p-6 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 flex items-center gap-3">
-            <CalendarClock className="h-7 w-7 text-amber-700" />
-            Programar primer cobro
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            Completa la fecha prometida del primer pago para las ventas registradas el 12 y 13 de marzo de 2026.
-          </p>
-        </div>
-        <div className="text-sm font-medium text-amber-700">
-          {contratosPendientesProgramacion.length} contratos por completar
-        </div>
-      </div>
-
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-amber-100 bg-white">
-        <table className="w-full min-w-[760px] text-sm">
-          <thead className="bg-amber-50 text-slate-700">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold">Contrato</th>
-              <th className="px-4 py-3 text-left font-semibold">Cliente</th>
-              <th className="px-4 py-3 text-left font-semibold">Cobrador</th>
-              <th className="px-4 py-3 text-left font-semibold">Fecha venta</th>
-              <th className="px-4 py-3 text-left font-semibold">Fecha primer cobro</th>
-              <th className="px-4 py-3 text-right font-semibold">Accion</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contratosPendientesProgramacion.map((contrato) => (
-              <tr key={contrato.id} className="border-t border-amber-100">
-                <td className="px-4 py-3 font-semibold text-slate-900">
-                  {contrato.numero_contrato}
-                </td>
-                <td className="px-4 py-3 text-slate-700">{contrato.cliente}</td>
-                <td className="px-4 py-3 text-slate-700">{contrato.cobrador_nombre}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {formatearFecha(contrato.fecha_venta)}
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="date"
-                    value={valorFecha(contrato.id)}
-                    onChange={(e) =>
-                      setFechasPorContrato((prev) => ({
-                        ...prev,
-                        [contrato.id]: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-slate-800 focus:outline-none focus:border-amber-500"
-                  />
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={async () => {
-                      const fecha = valorFecha(contrato.id)
-                      if (!fecha) return
-
-                      const guardado = await guardarFechaPrimerCobro(contrato.id, fecha)
-                      if (guardado) {
-                        setFechasPorContrato((prev) => ({
-                          ...prev,
-                          [contrato.id]: "",
-                        }))
-                      }
-                    }}
-                    disabled={!valorFecha(contrato.id) || guardandoProgramacionId === contrato.id}
-                    className="rounded-xl bg-amber-500 px-4 py-2 font-semibold text-slate-950 transition-colors hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {guardandoProgramacionId === contrato.id ? "Guardando..." : "Guardar"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  )
-}
-
-function PanelPrimerosCobros({
-  primerosCobrosPorCobrador,
-  contratosPrimerCobroPeriodo,
-  marcarEntregaCobrador,
-  guardandoProgramacionId,
-}) {
-  const totalEntregados = useMemo(
-    () => contratosPrimerCobroPeriodo.filter((contrato) => contrato.entregado_cobrador).length,
-    [contratosPrimerCobroPeriodo]
-  )
-
-  return (
-    <section className="rounded-[28px] border border-sky-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 flex items-center gap-3">
-            <ClipboardList className="h-7 w-7 text-sky-700" />
-            Primeros cobros del periodo
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            Aqui ves los contratos cuyo primer pago fue programado dentro del periodo seleccionado, para separarlos y entregarlos al cobrador correspondiente.
-          </p>
-        </div>
-        <div className="flex gap-3 text-sm">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-slate-600">
-            Total: <span className="font-semibold text-slate-900">{contratosPrimerCobroPeriodo.length}</span>
-          </div>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700">
-            Entregados: <span className="font-semibold">{totalEntregados}</span>
-          </div>
-        </div>
-      </div>
-
-      {contratosPrimerCobroPeriodo.length === 0 ? (
-        <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-slate-500">
-          No hay contratos con primer cobro programado para este periodo.
-        </div>
-      ) : (
-        <div className="mt-6 space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {primerosCobrosPorCobrador.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-3xl border border-sky-100 bg-linear-to-br from-white to-sky-50 p-5"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-600">
-                      Primeros cobros
-                    </div>
-                    <div className="mt-3 text-4xl font-semibold text-slate-900">
-                      {item.cantidad}
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-sky-100 p-3 text-sky-700">
-                    <CalendarClock className="h-6 w-6" />
-                  </div>
-                </div>
-                <div className="mt-4 text-sm">
-                  <div className="font-semibold text-slate-900">{item.nombre}</div>
-                  <div className="capitalize text-slate-500">{item.zona}</div>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <div className="rounded-xl bg-white px-3 py-2 text-slate-600">
-                    Pendientes: <span className="font-semibold text-slate-900">{item.pendientes}</span>
-                  </div>
-                  <div className="rounded-xl bg-emerald-50 px-3 py-2 text-emerald-700">
-                    Entregados: <span className="font-semibold">{item.entregados}</span>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {primerosCobrosPorCobrador
-            .filter((item) => item.contratos.length > 0)
-            .map((item) => (
-              <div
-                key={item.id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
-              >
-                <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-5 py-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{item.nombre}</h3>
-                    <p className="text-sm capitalize text-slate-500">{item.zona}</p>
-                  </div>
-                  <div className="text-sm text-slate-600">
-                    {item.contratos.length} contratos programados
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[900px] text-sm">
-                    <thead className="bg-slate-50 text-slate-700">
-                      <tr>
-                        <th className="px-4 py-3 text-left font-semibold">Contrato</th>
-                        <th className="px-4 py-3 text-left font-semibold">Cliente</th>
-                        <th className="px-4 py-3 text-left font-semibold">Fecha venta</th>
-                        <th className="px-4 py-3 text-left font-semibold">Primer cobro</th>
-                        <th className="px-4 py-3 text-right font-semibold">Saldo</th>
-                        <th className="px-4 py-3 text-left font-semibold">Entrega</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {item.contratos.map((contrato) => (
-                        <tr key={contrato.id} className="border-t border-slate-100">
-                          <td className="px-4 py-3 font-semibold text-slate-900">
-                            {contrato.numero_contrato}
-                          </td>
-                          <td className="px-4 py-3 text-slate-700">{contrato.cliente}</td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {formatearFecha(contrato.fecha_venta)}
-                          </td>
-                          <td className="px-4 py-3 text-slate-700">
-                            {formatearFecha(contrato.fecha_primer_cobro)}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold text-rose-700">
-                            S/ {Number(contrato.saldo_pendiente || 0).toFixed(2)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <label className="inline-flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2">
-                              <input
-                                type="checkbox"
-                                checked={contrato.entregado_cobrador}
-                                onChange={(e) =>
-                                  marcarEntregaCobrador(contrato.id, e.target.checked)
-                                }
-                                disabled={guardandoProgramacionId === contrato.id}
-                                className="h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-600"
-                              />
-                              <span className="text-sm text-slate-700">
-                                {contrato.entregado_cobrador
-                                  ? `Entregado${contrato.fecha_entrega_cobrador ? ` (${formatearFecha(contrato.fecha_entrega_cobrador)})` : ""}`
-                                  : "Pendiente de entrega"}
-                              </span>
-                            </label>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-        </div>
-      )}
-    </section>
-  )
 }
 
 function PanelClientesCriticos({ resumenClientesCriticos }) {
@@ -416,9 +168,6 @@ export default function DashboardContent() {
     clientesPorZona,
     clientesPorCobrador,
     canceladasPorCobrador,
-    contratosPrimerCobroPeriodo,
-    primerosCobrosPorCobrador,
-    contratosPendientesProgramacion,
     resumenClientesCriticos,
     periodo,
     setPeriodo,
@@ -430,9 +179,6 @@ export default function DashboardContent() {
     loading,
     error,
     cargarDatos,
-    guardandoProgramacionId,
-    guardarFechaPrimerCobro,
-    marcarEntregaCobrador,
   } = useDashboard()
 
   if (loading) {
@@ -447,7 +193,7 @@ export default function DashboardContent() {
     <div className="max-w-screen-2xl mx-auto space-y-6">
       <SectionHeader
         titulo="Dashboard"
-        subtitulo="Panel administrativo para seguimiento operativo, programacion de primeros cobros y control comercial"
+        subtitulo="Panel administrativo para seguimiento operativo general y control comercial"
         onRefresh={cargarDatos}
       />
 
@@ -462,7 +208,7 @@ export default function DashboardContent() {
               Resumen ejecutivo por periodo de trabajo
             </h2>
             <p className="mt-3 text-sm md:text-base text-slate-300">
-              {etiquetaPeriodo}. La cartera activa se muestra de forma general, las canceladas se calculan por su ultimo pago y los primeros cobros se organizan por la fecha prometida al cliente.
+              {etiquetaPeriodo}. La cartera activa se muestra de forma general y las canceladas se calculan por su ultimo pago para mantener una lectura ejecutiva del negocio.
             </p>
           </div>
 
@@ -557,19 +303,6 @@ export default function DashboardContent() {
           </article>
         ))}
       </div>
-
-      <PanelProgramacionPrimerCobro
-        contratosPendientesProgramacion={contratosPendientesProgramacion}
-        guardarFechaPrimerCobro={guardarFechaPrimerCobro}
-        guardandoProgramacionId={guardandoProgramacionId}
-      />
-
-      <PanelPrimerosCobros
-        primerosCobrosPorCobrador={primerosCobrosPorCobrador}
-        contratosPrimerCobroPeriodo={contratosPrimerCobroPeriodo}
-        marcarEntregaCobrador={marcarEntregaCobrador}
-        guardandoProgramacionId={guardandoProgramacionId}
-      />
 
       <PanelClientesCriticos resumenClientesCriticos={resumenClientesCriticos} />
 

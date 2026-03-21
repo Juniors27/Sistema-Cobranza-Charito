@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import {
+  ClipboardList,
   TrendingUp,
   Users,
   FileText,
@@ -19,6 +20,7 @@ export default function DashboardLayout({ children }) {
   const menuItems = [
     { name: "Dashboard", href: "/dashboard", icon: TrendingUp },
     { name: "Clientes", href: "/dashboard/clientes", icon: Users },
+    { name: "Contratos de salida", href: "/dashboard/contratos-salida", icon: ClipboardList },
     { name: "Nueva Venta", href: "/dashboard/ventas", icon: FileText },
     { name: "Pagos", href: "/dashboard/pagos", icon: CheckCircle2 },
     { name: "Cobradores", href: "/dashboard/cobradores", icon: HandCoins },

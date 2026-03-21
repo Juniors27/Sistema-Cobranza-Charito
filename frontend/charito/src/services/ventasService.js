@@ -94,7 +94,13 @@ export const registrarVentaService = async (data) => {
 
   if (!res.ok) {
     const error = await res.json()
-    throw new Error(error?.detail || "Error al registrar venta")
+    const mensaje =
+      error?.detail ||
+      Object.entries(error || {})
+        .map(([campo, mensajes]) => `${campo}: ${Array.isArray(mensajes) ? mensajes.join(", ") : mensajes}`)
+        .join(" | ")
+
+    throw new Error(mensaje || "Error al registrar venta")
   }
 
   return res.json()

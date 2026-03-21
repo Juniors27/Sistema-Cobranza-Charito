@@ -127,14 +127,20 @@ const obtenerSemanaLaboral = (referencia = new Date()) => {
   const base = new Date(referencia)
   base.setHours(0, 0, 0, 0)
 
-  const ultimoDomingo = new Date(base)
-  ultimoDomingo.setDate(base.getDate() - base.getDay())
+  const inicioSemana = new Date(base)
+  const diaSemana = base.getDay()
 
-  const finSemanaLaboral = new Date(ultimoDomingo)
-  finSemanaLaboral.setDate(ultimoDomingo.getDate() + 3)
+  if (diaSemana === 6) {
+    inicioSemana.setDate(base.getDate() + 1)
+  } else {
+    inicioSemana.setDate(base.getDate() - diaSemana)
+  }
+
+  const finSemanaLaboral = new Date(inicioSemana)
+  finSemanaLaboral.setDate(inicioSemana.getDate() + 3)
 
   return {
-    inicio: ultimoDomingo,
+    inicio: inicioSemana,
     fin: finSemanaLaboral,
   }
 }

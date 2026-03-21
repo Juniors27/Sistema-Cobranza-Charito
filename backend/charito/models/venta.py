@@ -76,6 +76,13 @@ class Venta(models.Model):
     )
 
     frecuencia_pago = models.CharField(max_length=20, choices=FRECUENCIAS_PAGO)
+    monto_frecuencia = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(Decimal('0.00'))]
+    )
     dia_cobro = models.CharField(max_length=50, blank=True, null=True)
 
     # Control

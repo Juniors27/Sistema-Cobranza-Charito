@@ -119,6 +119,7 @@ export const useClientes = () => {
 
       setVentaEditar({
         ...ventaDetallada,
+        monto_frecuencia: ventaDetallada.monto_frecuencia ?? "",
         productos: productosVenta,
       });
       setBuscarProductoEdit("");
@@ -189,6 +190,13 @@ export const useClientes = () => {
     setModalDetalle(true);
 
     if (venta.id) {
+      try {
+        const ventaDetallada = await getVentaDetalle(venta.id);
+        setVentaDetalle(ventaDetallada);
+      } catch {
+        toast.error("No se pudo cargar el detalle completo del cliente");
+      }
+
       await cargarHistorial(venta.id);
     }
   };
@@ -223,6 +231,10 @@ export const useClientes = () => {
 
       const ventaActualizada = {
         ...ventaEditar,
+        monto_frecuencia:
+          ventaEditar.monto_frecuencia === "" || ventaEditar.monto_frecuencia === null
+            ? null
+            : Number(ventaEditar.monto_frecuencia),
         productos: ventaEditar.productos.map((producto) => ({
           nombre: producto.nombre,
           categoria: producto.categoria || "otros",

@@ -15,6 +15,7 @@ export const useVentas = (productos = []) => {
   const [loading, setLoading] = useState(false);
   const [errorContrato, setErrorContrato] = useState("");
   const [mostrarSaldo, setMostrarSaldo] = useState(false);
+  const [erroresFormulario, setErroresFormulario] = useState({});
 
   const [formVenta, setFormVenta] = useState({
     numeroContrato: "",
@@ -25,6 +26,7 @@ export const useVentas = (productos = []) => {
     zona: "milagro",
     productos: [],
     frecuenciaPago: "semanal",
+    montoFrecuencia: "",
     diaCobro: "",
     vendedor: "",
     fechaVenta: new Date().toISOString().split("T")[0],
@@ -54,6 +56,7 @@ export const useVentas = (productos = []) => {
   );
 
   const saldo = (Number(formVenta.monto) || 0) - (Number(formVenta.inicial) || 0);
+  const requiereFechaPrimerCobro = !formVenta.dioInicial;
 
   useEffect(() => {
     const cargar = async () => {
@@ -68,6 +71,20 @@ export const useVentas = (productos = []) => {
     cargar();
   }, []);
 
+  const limpiarErrorCampo = (campo) => {
+    if (campo === "numeroContrato") {
+      setErrorContrato("");
+    }
+
+    setErroresFormulario((prev) => {
+      if (!prev[campo]) return prev;
+
+      const next = { ...prev };
+      delete next[campo];
+      return next;
+    });
+  };
+
   const agregarProducto = (producto) => {
     setFormVenta((prev) => {
       const yaExiste = prev.productos.some((item) => item.nombre === producto.nombre);
@@ -75,6 +92,8 @@ export const useVentas = (productos = []) => {
         toast.warning("Ese producto ya fue agregado. Puedes editar su cantidad o monto.");
         return prev;
       }
+
+      limpiarErrorCampo("productos");
 
       return {
         ...prev,
@@ -95,6 +114,7 @@ export const useVentas = (productos = []) => {
   };
 
   const actualizarProducto = (index, campo, valor) => {
+    limpiarErrorCampo("productos");
     setFormVenta((prev) => ({
       ...prev,
       productos: prev.productos.map((producto, itemIndex) =>
@@ -120,7 +140,7 @@ export const useVentas = (productos = []) => {
       const existe = await validarContratoService(numeroContrato);
 
       if (existe) {
-        setErrorContrato("Contrato ya está registrado");
+        setErrorContrato("Contrato ya est\u00e1 registrado");
         toast.warning("El contrato ya existe");
         return true;
       }
@@ -134,21 +154,72 @@ export const useVentas = (productos = []) => {
     }
   };
 
+  const validarFormulario = () => {
+    const nuevosErrores = {};
+
+    if (!formVenta.numeroContrato.trim()) {
+      nuevosErrores.numeroContrato = "Ingresa el n\u00famero de contrato";
+    }
+    if (!formVenta.nombre.trim()) nuevosErrores.nombre = "Ingresa el nombre";
+    if (!formVenta.apellido.trim()) nuevosErrores.apellido = "Ingresa el apellido";
+    if (!formVenta.direccion.trim()) nuevosErrores.direccion = "Ingresa la direcci\u00f3n";
+    if (!formVenta.lugar.trim()) nuevosErrores.lugar = "Ingresa el lugar";
+    if (!formVenta.zona) nuevosErrores.zona = "Selecciona la zona";
+    if (!formVenta.cobradorId) nuevosErrores.cobradorId = "Selecciona un cobrador";
+    if (!formVenta.frecuenciaPago) nuevosErrores.frecuenciaPago = "Selecciona la forma de pago";
+    if (!formVenta.montoFrecuencia || Number(formVenta.montoFrecuencia) <= 0) {
+      nuevosErrores.montoFrecuencia = "Ingresa cu\u00e1nto dar\u00e1 seg\u00fan la frecuencia";
+    }
+    if (!formVenta.diaCobro.trim()) nuevosErrores.diaCobro = "Ingresa el d\u00eda de cobranza";
+    if (!formVenta.vendedor.trim()) nuevosErrores.vendedor = "Ingresa el vendedor";
+    if (!formVenta.fechaVenta) nuevosErrores.fechaVenta = "Selecciona la fecha de venta";
+    if (requiereFechaPrimerCobro && !formVenta.fechaPrimerCobro) {
+      nuevosErrores.fechaPrimerCobro = "Selecciona la fecha estimada de primer cobro";
+    }
+    if (!formVenta.monto || Number(formVenta.monto) <= 0) {
+      nuevosErrores.monto = "Ingresa un saldo actual v\u00e1lido";
+    }
+
+    if (errorContrato) nuevosErrores.numeroContrato = errorContrato;
+
+    if (formVenta.productos.length === 0) {
+      nuevosErrores.productos = "Agrega al menos un producto";
+    }
+
+    const productosInvalidos = formVenta.productos.some(
+      (producto) =>
+        !producto.nombre ||
+        Number(producto.cantidad || 0) < 1 ||
+        !producto.precio_total ||
+        Number(producto.precio_total) <= 0
+    );
+
+    if (productosInvalidos) {
+      nuevosErrores.productos = "Revisa cantidad y monto de los productos";
+    }
+
+    if (formVenta.dioInicial && Number(formVenta.inicial || 0) <= 0) {
+      nuevosErrores.inicial = "Ingresa el monto inicial";
+    }
+
+    if (
+      formVenta.dioInicial &&
+      Number(formVenta.inicial || 0) > 0 &&
+      Number(formVenta.inicial || 0) > Number(formVenta.monto || 0)
+    ) {
+      nuevosErrores.inicial = "El inicial no puede ser mayor al saldo actual";
+    }
+
+    setErroresFormulario(nuevosErrores);
+    return Object.keys(nuevosErrores).length === 0;
+  };
+
   const registrarVenta = async () => {
     try {
       setLoading(true);
 
-      if (formVenta.productos.length === 0) {
-        toast.error("Agrega al menos un producto");
-        return false;
-      }
-
-      const productosInvalidos = formVenta.productos.some(
-        (producto) => !producto.precio_total || Number(producto.precio_total) <= 0
-      );
-
-      if (productosInvalidos) {
-        toast.error("Cada producto debe tener un monto válido");
+      if (!validarFormulario()) {
+        toast.error("Falta completar datos obligatorios");
         return false;
       }
 
@@ -174,8 +245,10 @@ export const useVentas = (productos = []) => {
         monto: Number(formVenta.monto),
         inicial: Number(formVenta.inicial || 0),
         frecuencia_pago: formVenta.frecuenciaPago,
+        monto_frecuencia: Number(formVenta.montoFrecuencia),
         dia_cobro: formVenta.diaCobro || "",
-        fecha_primer_cobro: formVenta.fechaPrimerCobro || null,
+        fecha_primer_cobro:
+          formVenta.fechaPrimerCobro || (formVenta.dioInicial ? formVenta.fechaVenta : null),
         vendedor: formVenta.vendedor || "",
         cobrador: Number(formVenta.cobradorId),
       };
@@ -193,9 +266,11 @@ export const useVentas = (productos = []) => {
         productos: [],
         fechaPrimerCobro: "",
         monto: "",
+        montoFrecuencia: "",
         inicial: "",
         dioInicial: false,
       }));
+      setErroresFormulario({});
       setBuscarProducto("");
       setMostrarProductos(false);
 
@@ -215,6 +290,8 @@ export const useVentas = (productos = []) => {
     formVenta,
     setFormVenta,
     errorContrato,
+    erroresFormulario,
+    limpiarErrorCampo,
     buscarProducto,
     setBuscarProducto,
     mostrarProductos,
@@ -225,6 +302,7 @@ export const useVentas = (productos = []) => {
     mostrarSaldo,
     setMostrarSaldo,
     saldo,
+    requiereFechaPrimerCobro,
     precioTotal,
     agregarProducto,
     actualizarProducto,

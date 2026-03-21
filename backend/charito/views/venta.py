@@ -136,6 +136,7 @@ class VentaListView(ListAPIView):
                 "inicial",
                 "saldo_pendiente",
                 "frecuencia_pago",
+                "monto_frecuencia",
                 "fecha_inicial",
                 "fecha_primer_cobro",
                 "primer_pago_registrado",
@@ -155,6 +156,7 @@ class VentaListView(ListAPIView):
                 "direccion",
                 "zona",
                 "frecuencia_pago",
+                "monto_frecuencia",
                 "fecha_inicial",
                 "saldo_pendiente",
                 "estado",
@@ -260,6 +262,7 @@ class ProgramacionPrimerCobroView(APIView):
 
         fecha_primer_cobro = request.data.get("fecha_primer_cobro")
         entregado_cobrador = request.data.get("entregado_cobrador")
+        fecha_entrega_cobrador = request.data.get("fecha_entrega_cobrador")
 
         if fecha_primer_cobro is not None:
             if fecha_primer_cobro == "":
@@ -273,10 +276,25 @@ class ProgramacionPrimerCobroView(APIView):
                     )
                 venta.fecha_primer_cobro = fecha_parseada
 
+        if fecha_entrega_cobrador is not None:
+            if fecha_entrega_cobrador == "":
+                venta.fecha_entrega_cobrador = None
+            else:
+                fecha_entrega_parseada = parse_date(str(fecha_entrega_cobrador))
+                if not fecha_entrega_parseada:
+                    return Response(
+                        {"fecha_entrega_cobrador": ["Fecha invalida"]},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                venta.fecha_entrega_cobrador = fecha_entrega_parseada
+
         if entregado_cobrador is not None:
             entregado = str(entregado_cobrador).lower() in ["true", "1", "si", "yes"]
             venta.entregado_cobrador = entregado
-            venta.fecha_entrega_cobrador = timezone.localdate() if entregado else None
+            if entregado and not venta.fecha_entrega_cobrador:
+                venta.fecha_entrega_cobrador = timezone.localdate()
+            if not entregado and fecha_entrega_cobrador is None:
+                venta.fecha_entrega_cobrador = None
 
         venta.save(
             update_fields=[

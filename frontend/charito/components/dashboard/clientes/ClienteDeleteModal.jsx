@@ -12,7 +12,7 @@ export default function ClienteDeleteModal({
       <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl">
         <h3 className="text-2xl font-semibold text-slate-900">Eliminar cliente</h3>
         <p className="mt-3 text-sm text-slate-600">
-          Esta accion eliminara el contrato y los pagos asociados a este cliente.
+          Esta acción eliminará el contrato y los pagos asociados a este cliente.
         </p>
 
         <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">

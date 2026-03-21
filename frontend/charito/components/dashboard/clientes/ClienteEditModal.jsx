@@ -241,6 +241,23 @@ export default function ClienteEditModal({
           </div>
 
           <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Monto segun frecuencia
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={ventaEditar.monto_frecuencia ?? ""}
+              onChange={(e) =>
+                setVentaEditar({ ...ventaEditar, monto_frecuencia: e.target.value })
+              }
+              className="w-full rounded-xl border-2 border-gray-200 p-3"
+              placeholder="Ej. 20, 40, 60"
+            />
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">Día de Cobranza</label>
             <input
               type="text"

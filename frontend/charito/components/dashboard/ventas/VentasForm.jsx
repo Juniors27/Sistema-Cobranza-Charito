@@ -6,6 +6,12 @@ import { useVentas } from "@/src/hooks/useVentas"
 import { SectionHeader } from "@/components/ui"
 
 const convertirAMayusculas = (valor) => valor.toUpperCase()
+const DIAS_COBRANZA_SEMANAL = [
+  "DOMINGO",
+  "LUNES",
+  "MARTES",
+  "MIÉRCOLES",
+]
 
 const formatearMoneda = (monto) => `S/ ${Number(monto || 0).toFixed(2)}`
 
@@ -14,6 +20,8 @@ const VentasForm = () => {
     cobradores,
     formVenta,
     setFormVenta,
+    erroresFormulario,
+    limpiarErrorCampo,
     buscarProducto,
     setBuscarProducto,
     mostrarProductos,
@@ -25,11 +33,19 @@ const VentasForm = () => {
     mostrarSaldo,
     setMostrarSaldo,
     saldo,
+    requiereFechaPrimerCobro,
     precioTotal,
     agregarProducto,
     actualizarProducto,
     eliminarProducto,
   } = useVentas(productos)
+
+  const inputClassName = (campo) =>
+    `w-full rounded-xl border p-3 text-slate-800 focus:outline-none ${
+      erroresFormulario[campo]
+        ? "border-red-500 focus:border-red-500"
+        : "border-slate-300 focus:border-sky-600"
+    }`
 
   return (
     <div className="space-y-6">
@@ -46,27 +62,28 @@ const VentasForm = () => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Numero de Contrato *
-              </label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  {"N\u00famero de Contrato *"}
+                </label>
               <input
                 type="text"
                 placeholder="1234"
                 value={formVenta.numeroContrato}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({
                     ...formVenta,
                     numeroContrato: convertirAMayusculas(e.target.value),
                   })
-                }
+                  limpiarErrorCampo("numeroContrato")
+                }}
                 onBlur={() => validarContrato(formVenta.numeroContrato)}
-                className={`w-full rounded-xl border p-3 text-slate-800 focus:outline-none ${
-                  errorContrato
-                    ? "border-red-500 focus:border-red-500"
-                    : "border-slate-300 focus:border-sky-600"
-                }`}
+                className={inputClassName("numeroContrato")}
               />
-              {errorContrato && <p className="mt-1 text-sm text-red-500">{errorContrato}</p>}
+              {(erroresFormulario.numeroContrato || errorContrato) && (
+                <p className="mt-1 text-sm text-red-500">
+                  {erroresFormulario.numeroContrato || errorContrato}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -78,14 +95,18 @@ const VentasForm = () => {
                   type="text"
                   placeholder="Juan"
                   value={formVenta.nombre}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormVenta({
                       ...formVenta,
                       nombre: convertirAMayusculas(e.target.value),
                     })
-                  }
-                  className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                    limpiarErrorCampo("nombre")
+                  }}
+                  className={inputClassName("nombre")}
                 />
+                {erroresFormulario.nombre && (
+                  <p className="mt-1 text-sm text-red-500">{erroresFormulario.nombre}</p>
+                )}
               </div>
 
               <div>
@@ -96,51 +117,63 @@ const VentasForm = () => {
                   type="text"
                   placeholder="Perez"
                   value={formVenta.apellido}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormVenta({
                       ...formVenta,
                       apellido: convertirAMayusculas(e.target.value),
                     })
-                  }
-                  className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                    limpiarErrorCampo("apellido")
+                  }}
+                  className={inputClassName("apellido")}
                 />
+                {erroresFormulario.apellido && (
+                  <p className="mt-1 text-sm text-red-500">{erroresFormulario.apellido}</p>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Direccion *
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  {"Direcci\u00f3n *"}
               </label>
               <input
                 type="text"
                 placeholder="Ingrese la direccion"
                 value={formVenta.direccion}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({
                     ...formVenta,
                     direccion: convertirAMayusculas(e.target.value),
                   })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("direccion")
+                }}
+                className={inputClassName("direccion")}
               />
+              {erroresFormulario.direccion && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.direccion}</p>
+              )}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Lugar
+                Lugar *
               </label>
               <input
                 type="text"
                 placeholder="Ejm. San Andres, Lomas"
                 value={formVenta.lugar}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({
                     ...formVenta,
                     lugar: convertirAMayusculas(e.target.value),
                   })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("lugar")
+                }}
+                className={inputClassName("lugar")}
               />
+              {erroresFormulario.lugar && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.lugar}</p>
+              )}
             </div>
 
             <div>
@@ -149,13 +182,19 @@ const VentasForm = () => {
               </label>
               <select
                 value={formVenta.zona}
-                onChange={(e) => setFormVenta({ ...formVenta, zona: e.target.value })}
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                onChange={(e) => {
+                  setFormVenta({ ...formVenta, zona: e.target.value })
+                  limpiarErrorCampo("zona")
+                }}
+                className={inputClassName("zona")}
               >
                 <option value="milagro">Milagro</option>
                 <option value="huanchaco">Huanchaco</option>
                 <option value="buenos aires">Buenos Aires</option>
               </select>
+              {erroresFormulario.zona && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.zona}</p>
+              )}
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -172,8 +211,8 @@ const VentasForm = () => {
                     setBuscarProducto(convertirAMayusculas(e.target.value))
                     setMostrarProductos(true)
                   }}
-                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
-                />
+                className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+              />
 
                 {mostrarProductos && buscarProducto && (
                   <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white text-slate-800 shadow-lg">
@@ -261,18 +300,22 @@ const VentasForm = () => {
                   ))
                 )}
               </div>
+              {erroresFormulario.productos && (
+                <p className="mt-3 text-sm text-red-500">{erroresFormulario.productos}</p>
+              )}
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Cobrador Asignado *
-              </label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Cobrador Asignado *
+                </label>
               <select
                 value={formVenta.cobradorId}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({ ...formVenta, cobradorId: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("cobradorId")
+                }}
+                className={inputClassName("cobradorId")}
               >
                 <option value="">Seleccionar cobrador</option>
                 {cobradores.map((cobrador) => (
@@ -281,93 +324,170 @@ const VentasForm = () => {
                   </option>
                 ))}
               </select>
+              {erroresFormulario.cobradorId && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.cobradorId}</p>
+              )}
             </div>
           </div>
 
           <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Forma de Pago *
+                </label>
+                <select
+                  value={formVenta.frecuenciaPago}
+                  onChange={(e) => {
+                    setFormVenta({ ...formVenta, frecuenciaPago: e.target.value })
+                    limpiarErrorCampo("frecuenciaPago")
+                  }}
+                  className={inputClassName("frecuenciaPago")}
+                >
+                  <option value="semanal">Semanal (S)</option>
+                  <option value="quincenal">Quincenal (Q)</option>
+                  <option value="mensual">Mensual (M)</option>
+                </select>
+                {erroresFormulario.frecuenciaPago && (
+                  <p className="mt-1 text-sm text-red-500">{erroresFormulario.frecuenciaPago}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  {"Monto según frecuencia *"}
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ej. 20, 40, 60"
+                  value={formVenta.montoFrecuencia}
+                  onChange={(e) => {
+                    setFormVenta({
+                      ...formVenta,
+                      montoFrecuencia: e.target.value.replace(/[^0-9.]/g, ""),
+                    })
+                    limpiarErrorCampo("montoFrecuencia")
+                  }}
+                  className={inputClassName("montoFrecuencia")}
+                />
+                {erroresFormulario.montoFrecuencia && (
+                  <p className="mt-1 text-sm text-red-500">{erroresFormulario.montoFrecuencia}</p>
+                )}
+              </div>
+            </div>
+
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Forma de Pago *
-              </label>
-              <select
-                value={formVenta.frecuenciaPago}
-                onChange={(e) =>
-                  setFormVenta({ ...formVenta, frecuenciaPago: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
-              >
-                <option value="semanal">Semanal (S)</option>
-                <option value="quincenal">Quincenal (Q)</option>
-                <option value="mensual">Mensual (M)</option>
-              </select>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                {"D\u00eda de Cobranza *"}
+                </label>
+              {formVenta.frecuenciaPago === "semanal" ? (
+                <select
+                  value={formVenta.diaCobro}
+                  onChange={(e) => {
+                    setFormVenta({
+                      ...formVenta,
+                      diaCobro: e.target.value,
+                    })
+                    limpiarErrorCampo("diaCobro")
+                  }}
+                  className={inputClassName("diaCobro")}
+                >
+                  <option value="">{"Selecciona un día"}</option>
+                  {DIAS_COBRANZA_SEMANAL.map((dia) => (
+                    <option key={dia} value={dia}>
+                      {dia.charAt(0).toUpperCase() + dia.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={formVenta.diaCobro}
+                  onChange={(e) => {
+                    setFormVenta({
+                      ...formVenta,
+                      diaCobro: convertirAMayusculas(e.target.value),
+                    })
+                    limpiarErrorCampo("diaCobro")
+                  }}
+                  className={inputClassName("diaCobro")}
+                />
+              )}
+              {erroresFormulario.diaCobro && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.diaCobro}</p>
+              )}
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Dia de Cobranza
-              </label>
-              <input
-                type="text"
-                value={formVenta.diaCobro}
-                onChange={(e) =>
-                  setFormVenta({
-                    ...formVenta,
-                    diaCobro: convertirAMayusculas(e.target.value),
-                  })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Vendedor
+                Vendedor *
               </label>
               <input
                 type="text"
                 value={formVenta.vendedor}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({
                     ...formVenta,
                     vendedor: convertirAMayusculas(e.target.value),
                   })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("vendedor")
+                }}
+                className={inputClassName("vendedor")}
               />
+              {erroresFormulario.vendedor && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.vendedor}</p>
+              )}
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Fecha de Venta *
-              </label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Fecha de Venta *
+                </label>
               <input
                 type="date"
                 value={formVenta.fechaVenta}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({ ...formVenta, fechaVenta: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("fechaVenta")
+                }}
+                className={inputClassName("fechaVenta")}
               />
+              {erroresFormulario.fechaVenta && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.fechaVenta}</p>
+              )}
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Fecha estimada de primer cobro
-              </label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                {requiereFechaPrimerCobro
+                  ? "Fecha estimada de primer cobro *"
+                  : "Fecha estimada de primer cobro"}
+                </label>
               <input
                 type="date"
                 value={formVenta.fechaPrimerCobro}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta({ ...formVenta, fechaPrimerCobro: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("fechaPrimerCobro")
+                }}
+                className={inputClassName("fechaPrimerCobro")}
               />
+              {!requiereFechaPrimerCobro && (
+                <p className="mt-1 text-sm text-slate-500">
+                  Si el cliente dio inicial, este campo es opcional porque ese pago cuenta
+                  como primer cobro.
+                </p>
+              )}
+              {erroresFormulario.fechaPrimerCobro && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.fechaPrimerCobro}</p>
+              )}
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Total de productos
-              </div>
+                </div>
               <div className="mt-2 text-3xl font-semibold text-slate-900">
                 {formatearMoneda(precioTotal)}
               </div>
@@ -377,21 +497,25 @@ const VentasForm = () => {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
                 Saldo Actual *
-              </label>
+                </label>
               <input
                 type="text"
                 inputMode="decimal"
                 value={formVenta.monto}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormVenta((prev) => ({
                     ...prev,
                     monto: e.target.value.replace(/[^0-9.]/g, ""),
                   }))
-                }
-                className="w-full rounded-xl border border-slate-300 p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                  limpiarErrorCampo("monto")
+                }}
+                className={inputClassName("monto")}
               />
+              {erroresFormulario.monto && (
+                <p className="mt-1 text-sm text-red-500">{erroresFormulario.monto}</p>
+              )}
             </div>
 
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
@@ -410,7 +534,9 @@ const VentasForm = () => {
                   }}
                   className="h-6 w-6 text-sky-600"
                 />
-                <span className="text-lg font-semibold text-slate-700">Dio inicial?</span>
+                <span className="text-lg font-semibold text-slate-700">
+                  {"\u00bfDio inicial?"}
+                </span>
               </label>
 
               {formVenta.dioInicial && (
@@ -428,13 +554,17 @@ const VentasForm = () => {
                         inicial: e.target.value.replace(/[^0-9]/g, ""),
                       }))
                       setMostrarSaldo(true)
+                      limpiarErrorCampo("inicial")
                     }}
-                    className="w-full rounded-xl border border-sky-300 bg-white p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                    className={inputClassName("inicial")}
                   />
+                  {erroresFormulario.inicial && (
+                    <p className="mt-1 text-sm text-red-500">{erroresFormulario.inicial}</p>
+                  )}
 
                   {mostrarSaldo && formVenta.monto && formVenta.inicial && (
                     <div className="mt-2 rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-                      <div className="text-sm text-slate-600">Saldo despues del inicial:</div>
+                      <div className="text-sm text-slate-600">Saldo después del inicial:</div>
                       <div className="text-xl font-bold text-emerald-600">
                         {formatearMoneda(saldo)}
                       </div>

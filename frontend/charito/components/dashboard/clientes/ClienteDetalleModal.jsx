@@ -54,7 +54,7 @@ export default function ClienteDetalleModal({
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Direccion</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Dirección</p>
               <p className="mt-2 text-base font-medium">{ventaDetalle.direccion || "N/A"}</p>
             </div>
 
@@ -71,6 +71,14 @@ export default function ClienteDetalleModal({
                 {ventaDetalle.fecha_venta
                   ? formatearFechaDMY(ventaDetalle.fecha_venta)
                   : "N/A"}
+              </p>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                Fecha Prometida Del Primer Pago
+              </p>
+              <p className="mt-2 text-base font-semibold text-amber-900">
+                {ventaDetalle.fecha_primer_cobro
+                  ? formatearFechaDMY(ventaDetalle.fecha_primer_cobro)
+                  : "No programada"}
               </p>
             </div>
 
@@ -119,12 +127,12 @@ export default function ClienteDetalleModal({
               </div>
             ) : (
               <div className="text-center py-10 text-slate-500">
-                <p>No se encontro historial de pagos</p>
+                <p>No se encontró historial de pagos</p>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Precio Venta</p>
               <p className="mt-2 text-2xl font-semibold text-slate-900">
@@ -150,6 +158,17 @@ export default function ClienteDetalleModal({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">Frecuencia</p>
               <p className="mt-2 text-2xl font-semibold text-sky-800 capitalize">
                 {ventaDetalle.frecuencia_pago || "N/A"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                Monto Frecuencia
+              </p>
+              <p className="mt-2 text-2xl font-semibold text-amber-800">
+                {ventaDetalle.monto_frecuencia
+                  ? `S/ ${Number(ventaDetalle.monto_frecuencia).toFixed(2)}`
+                  : "N/A"}
               </p>
             </div>
           </div>
