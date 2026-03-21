@@ -4,13 +4,8 @@ import { PaginacionControles, LoadingScreen, ErrorScreen, EmptyState } from "@/c
 
 export default function HistorialTabla({
   datosPaginados,
-  cobradores,
   loading,
   error,
-  calcularEstadoAutomatico,
-  esBuenPagador,
-  obtenerUltimoPago,
-  obtenerAlertaPromesa,
   abrirModalObservaciones,
   cargarDatos,
   registrosPorPagina,
@@ -61,11 +56,10 @@ export default function HistorialTabla({
 
           <tbody>
             {datosPaginados.map((ventas) => {
-              const estado = calcularEstadoAutomatico(ventas)
-              const cobrador = cobradores.find((c) => c.id === ventas.cobrador)
-              const ultimoPago = obtenerUltimoPago(ventas)
-              const alertaPromesa = obtenerAlertaPromesa(ventas)
-              const bueno = esBuenPagador(ventas)
+              const estado = ventas.estado_control
+              const ultimoPago = ventas.ultimo_pago
+              const alertaPromesa = ventas.alerta_promesa
+              const bueno = ventas.es_buen_pagador
 
               return (
                 <tr
@@ -111,7 +105,7 @@ export default function HistorialTabla({
                   <td className="px-4 py-3 font-semibold">
                     S/ {parseFloat(ventas.saldo_pendiente).toFixed(2)}
                   </td>
-                  <td className="px-4 py-3">{cobrador?.nombre || "-"}</td>
+                  <td className="px-4 py-3">{ventas.cobrador_nombre || "-"}</td>
                   <td className="px-4 py-3 text-center">
                     {estado === "controlar" ? (
                       <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">

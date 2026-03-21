@@ -1,5 +1,30 @@
 import { API } from "@/src/config/api"
 
+export const getControlTarjetas = async ({
+  page = 1,
+  pageSize = 10,
+  search = "",
+  filtro = "todos",
+} = {}) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+    filtro,
+  })
+
+  if (search) {
+    params.append("search", search)
+  }
+
+  const res = await fetch(`${API.ventas.controlTarjetas}?${params.toString()}`)
+
+  if (!res.ok) {
+    throw new Error("Error obteniendo control de tarjetas")
+  }
+
+  return res.json()
+}
+
 
 /* =========================
    OBTENER PAGOS

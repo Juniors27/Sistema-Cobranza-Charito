@@ -282,25 +282,20 @@ export const filtrarVentasHistorial = (
   };
 };
 
-export const controlTarjetasExcel = (ventasFiltradas, cobradores, pagos) => {
-  const data = ventasFiltradas.map((v) => {
-    const cobrador = cobradores.find((c) => c.id === v.cobrador);
-    const ultimoPago = obtenerUltimoPago(v, pagos);
-
-    return {
-      Contrato: v.numero_contrato,
-      Cliente: `${v.nombre} ${v.apellido}`,
-      Direccion: v.direccion,
-      Zona: v.zona,
-      Frecuencia: v.frecuencia_pago,
-      "Fecha Venta": formatearFechaDMY(v.fecha_venta),
-      "Ultimo Pago": ultimoPago.fecha,
-      "Tiempo sin Pago": ultimoPago.atraso,
-      Saldo: parseFloat(v.saldo_pendiente).toFixed(2),
-      Cobrador: cobrador?.nombre || "",
-      Estado: calcularEstadoAutomatico(v, pagos),
-    };
-  });
+export const controlTarjetasExcel = (ventasFiltradas) => {
+  const data = ventasFiltradas.map((v) => ({
+    Contrato: v.numero_contrato,
+    Cliente: `${v.nombre} ${v.apellido}`,
+    Direccion: v.direccion,
+    Zona: v.zona,
+    Frecuencia: v.frecuencia_pago,
+    "Fecha Venta": v.fecha_venta ? formatearFechaDMY(v.fecha_venta) : "",
+    "Ultimo Pago": v.ultimo_pago?.fecha || "Sin pagos",
+    "Tiempo sin Pago": v.ultimo_pago?.atraso || "-",
+    Saldo: parseFloat(v.saldo_pendiente).toFixed(2),
+    Cobrador: v.cobrador_nombre || "",
+    Estado: v.estado_control || "normal",
+  }));
 
   const ws = XLSX.utils.json_to_sheet(data);
   const wb = XLSX.utils.book_new();

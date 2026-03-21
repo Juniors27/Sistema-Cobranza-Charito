@@ -1,5 +1,4 @@
 "use client"
-import { usePaginacion } from "@/src/hooks/usePaginacion";
 import { Paginacion, SectionHeader } from "@/components/ui";
 import HistorialFiltros from "./HistorialFiltros"
 import HistorialTabla from "./HistorialTabla"
@@ -12,17 +11,11 @@ export default function HistorialPage() {
     clientesControlar,
     buenosPagadores,
     clientesPromesaVencida,
-    cobradores,
+    conteos,
     loading,
     error,
     searchTerm,
     filtro,
-    ventas,
-    pagos,
-    obtenerUltimoPago,
-    obtenerAlertaPromesa,
-    calcularEstadoAutomatico,
-    esBuenPagador,
     modalObservacionesAbierto,
     ventaObservaciones,
     observacionesControl,
@@ -41,10 +34,6 @@ export default function HistorialPage() {
     setFiltro,
     setFormObservacion,
     controlTarjetasExcel,
-  } = useControlTarjetas();
-
-  const {
-    datosPaginados,
     paginaActual,
     totalPaginas,
     registrosPorPagina,
@@ -55,7 +44,7 @@ export default function HistorialPage() {
     cambiarRegistrosPorPagina,
     paginaSiguiente,
     irAPagina,
-  } = usePaginacion(ventasFiltradas);
+  } = useControlTarjetas();
 
   return (
     <div className="space-y-6">
@@ -74,15 +63,14 @@ export default function HistorialPage() {
           clientesControlar={clientesControlar}
           buenosPagadores={buenosPagadores}
           clientesPromesaVencida={clientesPromesaVencida}
-          ventas={ventas}
-          pagos={pagos}
+          conteos={conteos}
           controlTarjetasExcel={controlTarjetasExcel}
           ventasFiltradas={ventasFiltradas}
         />
 
         <div className="bg-white rounded-[28px] border border-slate-200 shadow-[0_18px_38px_rgba(15,23,42,0.06)] p-6">
           <HistorialTabla
-            datosPaginados={datosPaginados}
+            datosPaginados={ventasFiltradas}
             registrosPorPagina={registrosPorPagina}
             cambiarRegistrosPorPagina={cambiarRegistrosPorPagina}
             indiceInicio={indiceInicio}
@@ -90,11 +78,6 @@ export default function HistorialPage() {
             loading={loading}
             error={error}
             totalRegistros={totalRegistros}
-            cobradores={cobradores}
-            calcularEstadoAutomatico={calcularEstadoAutomatico}
-            esBuenPagador={esBuenPagador}
-            obtenerUltimoPago={obtenerUltimoPago}
-            obtenerAlertaPromesa={obtenerAlertaPromesa}
             abrirModalObservaciones={abrirModalObservaciones}
             cargarDatos={cargarDatos}
           />

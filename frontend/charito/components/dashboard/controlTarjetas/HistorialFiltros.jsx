@@ -10,10 +10,11 @@ export default function HistorialFiltros({
   clientesControlar,
   buenosPagadores,
   clientesPromesaVencida,
+  conteos,
   ventasFiltradas,
   controlTarjetasExcel
 }) {
-  const conteos = {
+  const resumen = conteos || {
     todos: clientesControlar.length + buenosPagadores.length,
     controlar: clientesControlar.length,
     buenos: buenosPagadores.length,
@@ -45,7 +46,7 @@ export default function HistorialFiltros({
                   : "bg-slate-200 text-slate-700 hover:bg-slate-300"
                   }`}
               >
-                {tipo === "promesas_vencidas" ? "PROMESAS VENCIDAS" : tipo.toUpperCase()} ({conteos[tipo]})
+                {tipo === "promesas_vencidas" ? "PROMESAS VENCIDAS" : tipo.toUpperCase()} ({resumen[tipo]})
               </button>
             ))}
 

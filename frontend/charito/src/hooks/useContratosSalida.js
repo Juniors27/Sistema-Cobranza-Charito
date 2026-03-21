@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { dashboardService } from "@/src/services/dashboardService"
 import { toast } from "sonner"
 
@@ -8,18 +8,6 @@ const PERIODOS = {
   semana_laboral: "semana_laboral",
   historico: "historico",
   rango: "rango",
-}
-
-const normalizarFecha = (fecha) => {
-  if (!fecha) return null
-
-  const [year, month, day] = String(fecha).slice(0, 10).split("-")
-  if (!year || !month || !day) return null
-
-  const date = new Date(Number(year), Number(month) - 1, Number(day))
-  date.setHours(0, 0, 0, 0)
-
-  return Number.isNaN(date.getTime()) ? null : date
 }
 
 const obtenerSemanaLaboral = (referencia = new Date()) => {
@@ -44,62 +32,74 @@ const obtenerSemanaLaboral = (referencia = new Date()) => {
   }
 }
 
-const fechaEnPeriodo = (fecha, periodo, fechaInicio, fechaFin, referencia = new Date()) => {
-  const fechaBase = normalizarFecha(fecha)
-  if (!fechaBase) return false
-
-  if (periodo === PERIODOS.historico) return true
-
-  if (periodo === PERIODOS.semana_laboral) {
-    const { inicio, fin } = obtenerSemanaLaboral(referencia)
-    return fechaBase >= inicio && fechaBase <= fin
-  }
-
-  if (periodo === PERIODOS.rango) {
-    const inicio = normalizarFecha(fechaInicio)
-    const fin = normalizarFecha(fechaFin)
-    if (!inicio || !fin) return false
-    return fechaBase >= inicio && fechaBase <= fin
-  }
-
-  return true
-}
-
-const ordenarPorFechaDesc = (fechaA, fechaB) => {
-  const dateA = normalizarFecha(fechaA)
-  const dateB = normalizarFecha(fechaB)
-
-  if (!dateA && !dateB) return 0
-  if (!dateA) return 1
-  if (!dateB) return -1
-
-  return dateB - dateA
-}
-
 export const useContratosSalida = () => {
-  const [ventas, setVentas] = useState([])
+  const [contratosSalida, setContratosSalida] = useState([])
+  const [gruposPorCobrador, setGruposPorCobrador] = useState([])
+  const [resumen, setResumen] = useState({
+    total: 0,
+    entregados: 0,
+    yaPagaron: 0,
+    pendientesPrimerPago: 0,
+    saldoTotal: 0,
+    cobradores: 0,
+  })
   const [cobradores, setCobradores] = useState([])
   const [periodo, setPeriodo] = useState(PERIODOS.semana_laboral)
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFin, setFechaFin] = useState("")
   const [cobradorFiltro, setCobradorFiltro] = useState("todos")
   const [busqueda, setBusqueda] = useState("")
+  const [paginaActual, setPaginaActual] = useState(1)
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(10)
+  const [totalRegistros, setTotalRegistros] = useState(0)
+  const [totalPaginas, setTotalPaginas] = useState(1)
   const [guardandoEntregaId, setGuardandoEntregaId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const cargarDatos = async (showToast = false) => {
+  const cargarCobradores = useCallback(async () => {
+    const cobradoresData = await dashboardService.getCobradores()
+    setCobradores(Array.isArray(cobradoresData) ? cobradoresData : [])
+  }, [])
+
+  const cargarDatos = useCallback(async (showToast = false) => {
     setLoading(true)
     setError(null)
 
     try {
-      const [ventasData, cobradoresData] = await Promise.all([
-        dashboardService.getVentas(),
-        dashboardService.getCobradores(),
-      ])
+      const respuesta = await dashboardService.getContratosSalida({
+        periodo,
+        fechaInicio,
+        fechaFin,
+        cobrador: cobradorFiltro,
+        search: busqueda,
+        page: paginaActual,
+        pageSize: registrosPorPagina,
+      })
 
-      setVentas(Array.isArray(ventasData) ? ventasData : [])
-      setCobradores(Array.isArray(cobradoresData) ? cobradoresData : [])
+      setContratosSalida(
+        Array.isArray(respuesta.results)
+          ? respuesta.results.map((contrato) => ({
+              ...contrato,
+              fecha_primer_pago: contrato.fecha_inicial || "",
+            }))
+          : []
+      )
+      setGruposPorCobrador(
+        Array.isArray(respuesta.gruposPorCobrador) ? respuesta.gruposPorCobrador : []
+      )
+      setResumen(
+        respuesta.resumen || {
+          total: 0,
+          entregados: 0,
+          yaPagaron: 0,
+          pendientesPrimerPago: 0,
+          saldoTotal: 0,
+          cobradores: 0,
+        }
+      )
+      setTotalRegistros(Number(respuesta.count || 0))
+      setTotalPaginas(Math.max(1, Math.ceil(Number(respuesta.count || 0) / registrosPorPagina)))
 
       if (showToast) {
         toast.success("Contratos de salida actualizados")
@@ -110,121 +110,49 @@ export const useContratosSalida = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [periodo, fechaInicio, fechaFin, cobradorFiltro, busqueda, paginaActual, registrosPorPagina])
+
+  useEffect(() => {
+    cargarCobradores().catch(() => {})
+  }, [cargarCobradores])
 
   useEffect(() => {
     cargarDatos()
-  }, [])
+  }, [cargarDatos])
 
-  const contratosSalida = useMemo(() => {
-    const termino = busqueda.trim().toLowerCase()
+  useEffect(() => {
+    setPaginaActual(1)
+  }, [periodo, fechaInicio, fechaFin, cobradorFiltro, busqueda])
 
-    return ventas
-      .filter((venta) => Number(venta.inicial || 0) <= 0)
-      .filter((venta) => Boolean(venta.fecha_primer_cobro))
-      .filter((venta) =>
-        fechaEnPeriodo(venta.fecha_primer_cobro, periodo, fechaInicio, fechaFin)
-      )
-      .filter((venta) =>
-        cobradorFiltro === "todos" ? true : String(venta.cobrador) === cobradorFiltro
-      )
-      .filter((venta) => {
-        if (!termino) return true
+  const rangoSemanaLaboral = useMemo(() => obtenerSemanaLaboral(), [])
 
-        const contenido = [
-          venta.numero_contrato,
-          venta.cliente,
-          venta.nombre,
-          venta.apellido,
-          venta.cobrador_nombre,
-          venta.zona,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
+  const indiceInicio = totalRegistros === 0 ? 0 : (paginaActual - 1) * registrosPorPagina
+  const indiceFin = indiceInicio + registrosPorPagina
 
-        return contenido.includes(termino)
-      })
-      .map((venta) => ({
-        id: venta.id,
-        numero_contrato: venta.numero_contrato,
-        cliente: venta.cliente || `${venta.nombre} ${venta.apellido}`.trim(),
-        cobrador: venta.cobrador,
-        cobrador_nombre: venta.cobrador_nombre || "Sin cobrador",
-        fecha_venta: venta.fecha_venta,
-        fecha_primer_cobro: venta.fecha_primer_cobro,
-        fecha_primer_pago: venta.fecha_inicial,
-        entregado_cobrador: Boolean(venta.entregado_cobrador),
-        fecha_entrega_cobrador: venta.fecha_entrega_cobrador,
-        saldo_pendiente: Number(venta.saldo_pendiente || 0),
-        primer_pago_registrado: Boolean(venta.primer_pago_registrado),
-      }))
-      .sort((a, b) => {
-        const porFecha = ordenarPorFechaDesc(a.fecha_primer_cobro, b.fecha_primer_cobro)
-        if (porFecha !== 0) return porFecha
-        return String(a.numero_contrato).localeCompare(String(b.numero_contrato))
-      })
-  }, [ventas, periodo, fechaInicio, fechaFin, cobradorFiltro, busqueda])
+  const paginaAnterior = () => {
+    if (paginaActual > 1) setPaginaActual((prev) => prev - 1)
+  }
 
-  const resumen = useMemo(() => {
-    const total = contratosSalida.length
-    const entregados = contratosSalida.filter((venta) => venta.entregado_cobrador).length
-    const yaPagaron = contratosSalida.filter((venta) => venta.primer_pago_registrado).length
-    const pendientesPrimerPago = total - yaPagaron
-    const saldoTotal = contratosSalida.reduce(
-      (acumulado, venta) => acumulado + venta.saldo_pendiente,
-      0
-    )
+  const paginaSiguiente = () => {
+    if (paginaActual < totalPaginas) setPaginaActual((prev) => prev + 1)
+  }
 
-    return {
-      total,
-      entregados,
-      yaPagaron,
-      pendientesPrimerPago,
-      saldoTotal,
-      cobradores: new Set(contratosSalida.map((venta) => venta.cobrador_nombre)).size,
+  const irAPagina = (numero) => {
+    if (numero >= 1 && numero <= totalPaginas) {
+      setPaginaActual(numero)
     }
-  }, [contratosSalida])
+  }
 
-  const gruposPorCobrador = useMemo(() => {
-    return cobradores
-      .map((cobrador) => {
-        const contratos = contratosSalida.filter((venta) => venta.cobrador === cobrador.id)
-
-        return {
-          id: cobrador.id,
-          nombre: cobrador.nombre,
-          zona: cobrador.zona,
-          contratos,
-          total: contratos.length,
-          entregados: contratos.filter((venta) => venta.entregado_cobrador).length,
-          yaPagaron: contratos.filter((venta) => venta.primer_pago_registrado).length,
-          pendientes: contratos.filter((venta) => !venta.primer_pago_registrado).length,
-        }
-      })
-      .filter((grupo) => grupo.total > 0)
-      .sort((a, b) => b.total - a.total || a.nombre.localeCompare(b.nombre))
-  }, [cobradores, contratosSalida])
-
-  const rangoSemanaLaboral = useMemo(
-    () => obtenerSemanaLaboral(),
-    []
-  )
+  const cambiarRegistrosPorPagina = (cantidad) => {
+    setRegistrosPorPagina(cantidad)
+    setPaginaActual(1)
+  }
 
   const actualizarEntregaContrato = async (ventaId, data) => {
     try {
       setGuardandoEntregaId(ventaId)
-      const ventaActualizada = await dashboardService.actualizarProgramacionPrimerCobro(
-        ventaId,
-        data
-      )
-
-      setVentas((prev) =>
-        prev.map((venta) =>
-          venta.id === ventaId ? { ...venta, ...ventaActualizada } : venta
-        )
-      )
-
+      await dashboardService.actualizarProgramacionPrimerCobro(ventaId, data)
+      await cargarDatos()
       toast.success("Entrega actualizada")
       return true
     } catch (err) {
@@ -237,6 +165,7 @@ export const useContratosSalida = () => {
 
   return {
     contratosSalida,
+    contratosSalidaPaginados: contratosSalida,
     gruposPorCobrador,
     resumen,
     cobradores,
@@ -253,6 +182,16 @@ export const useContratosSalida = () => {
     rangoSemanaLaboral,
     guardandoEntregaId,
     actualizarEntregaContrato,
+    paginaActual,
+    registrosPorPagina,
+    totalRegistros,
+    totalPaginas,
+    indiceInicio,
+    indiceFin,
+    irAPagina,
+    paginaAnterior,
+    paginaSiguiente,
+    cambiarRegistrosPorPagina,
     loading,
     error,
     cargarDatos,
