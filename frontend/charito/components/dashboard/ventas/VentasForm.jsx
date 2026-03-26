@@ -50,18 +50,10 @@ const VentasForm = () => {
         ? "border-red-500 focus:border-red-500"
         : "border-slate-300 focus:border-sky-600"
     }`
-
-  useEffect(() => {
-    setIndiceProductoActivo(0)
-  }, [buscarProducto])
-
-  useEffect(() => {
-    if (!mostrarProductos || productosFiltrados.length === 0) return
-
-    setIndiceProductoActivo((prev) =>
-      Math.min(prev, productosFiltrados.length - 1)
-    )
-  }, [mostrarProductos, productosFiltrados])
+  const indiceProductoActivoSeguro =
+    productosFiltrados.length > 0
+      ? Math.min(indiceProductoActivo, productosFiltrados.length - 1)
+      : 0
 
   useEffect(() => {
     const lista = listaProductosRef.current
@@ -109,7 +101,7 @@ const VentasForm = () => {
     if (e.key === "Enter") {
       if (productosFiltrados.length === 0) return
       e.preventDefault()
-      agregarProducto(productosFiltrados[indiceProductoActivo])
+      agregarProducto(productosFiltrados[indiceProductoActivoSeguro])
       return
     }
 
@@ -277,6 +269,7 @@ const VentasForm = () => {
                   value={buscarProducto}
                   onChange={(e) => {
                     setBuscarProducto(convertirAMayusculas(e.target.value))
+                    setIndiceProductoActivo(0)
                     setMostrarProductos(true)
                   }}
                   onFocus={() => {
@@ -303,12 +296,12 @@ const VentasForm = () => {
                       productosFiltrados.map((producto, index) => (
                         <li
                           key={producto.id}
-                          data-activo={index === indiceProductoActivo}
+                          data-activo={index === indiceProductoActivoSeguro}
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => agregarProducto(producto)}
                           onMouseEnter={() => setIndiceProductoActivo(index)}
                           className={`cursor-pointer px-4 py-2 ${
-                            index === indiceProductoActivo
+                            index === indiceProductoActivoSeguro
                               ? "bg-sky-50 text-sky-700"
                               : "hover:bg-slate-50"
                           }`}

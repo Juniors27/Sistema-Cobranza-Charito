@@ -110,7 +110,7 @@ function PanelClientesCriticos({ resumenClientesCriticos }) {
         </div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-rose-100 bg-white">
-          <table className="w-full min-w-[920px] text-sm">
+          <table className="w-full min-w-230 text-sm">
             <thead className="bg-rose-50 text-slate-700">
               <tr>
                 <th className="px-4 py-3 text-left font-semibold">Contrato</th>
@@ -212,7 +212,7 @@ export default function DashboardContent() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4 md:p-5 min-w-full xl:min-w-[430px]">
+          <div className="rounded-2xl border border-slate-700/80 bg-slate-900/60 p-4 md:p-5 min-w-full xl:min-w-107.5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-200 mb-4">
               <Filter className="h-4 w-4" />
               Filtros del dashboard

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 
 export const usePaginacion = (datos = [], registrosIniciales = 10) => {
   const [paginaActual, setPaginaActual] = useState(1);
@@ -12,15 +12,11 @@ export const usePaginacion = (datos = [], registrosIniciales = 10) => {
   }, [totalRegistros, registrosPorPagina]);
 
   
-  useEffect(() => {
-    if (paginaActual > totalPaginas) {
-      setPaginaActual(1);
-    }
-  }, [totalPaginas, paginaActual]);
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
 
   const indiceInicio = useMemo(() => {
-    return (paginaActual - 1) * registrosPorPagina;
-  }, [paginaActual, registrosPorPagina]);
+    return (paginaSegura - 1) * registrosPorPagina;
+  }, [paginaSegura, registrosPorPagina]);
 
   const indiceFin = useMemo(() => {
     return indiceInicio + registrosPorPagina;
@@ -37,13 +33,13 @@ export const usePaginacion = (datos = [], registrosIniciales = 10) => {
   };
 
   const paginaAnterior = () => {
-    if (paginaActual > 1) {
+    if (paginaSegura > 1) {
       setPaginaActual((prev) => prev - 1);
     }
   };
 
   const paginaSiguiente = () => {
-    if (paginaActual < totalPaginas) {
+    if (paginaSegura < totalPaginas) {
       setPaginaActual((prev) => prev + 1);
     }
   };
@@ -54,7 +50,7 @@ export const usePaginacion = (datos = [], registrosIniciales = 10) => {
   };
 
   return {
-    paginaActual,
+    paginaActual: paginaSegura,
     registrosPorPagina,
     totalRegistros,
     totalPaginas,

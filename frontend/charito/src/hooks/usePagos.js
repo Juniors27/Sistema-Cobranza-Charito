@@ -28,11 +28,7 @@ export const usePagos = () => {
     montoInicial: "",
   });
 
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const cargarDatos = async () => {
+  async function cargarDatos() {
     try {
       const [ventasData, cobradoresData] = await Promise.all([
         getVentas(),
@@ -43,7 +39,15 @@ export const usePagos = () => {
     } catch {
       toast.error("Error al cargar datos iniciales");
     }
-  };
+  }
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      cargarDatos();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   const contratoActual = ventas.find(
     (v) => v.numero_contrato === formPago.numeroContrato,

@@ -23,7 +23,8 @@ export const useAnalyticsProductos = () => {
   useEffect(() => {
     const cargarMeses = async () => {
       try {
-        const ventas = await getVentas()
+        // Para poblar meses no hace falta traer el listado pesado con detalle completo.
+        const ventas = await getVentas({ modulo: "dashboard" })
         const meses = obtenerMesesDisponibles(ventas)
 
         setMesesDisponibles(meses)

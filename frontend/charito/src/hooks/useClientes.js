@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   clientesService,
@@ -48,11 +48,7 @@ export const useClientes = () => {
     setPaginaActual(1);
   }, [zonaFiltro, registrosPorPagina]);
 
-  useEffect(() => {
-    cargarDatos();
-  }, [paginaActual, registrosPorPagina, searchDebounced, zonaFiltro]);
-
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -77,7 +73,11 @@ export const useClientes = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [paginaActual, registrosPorPagina, searchDebounced, zonaFiltro]);
+
+  useEffect(() => {
+    cargarDatos();
+  }, [cargarDatos]);
 
   const cambiarEstadoVenta = async (numero_contrato, estadoObjetivo) => {
     try {

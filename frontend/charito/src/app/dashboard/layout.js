@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import {
+  BarChart3,
   ClipboardList,
   TrendingUp,
   Users,
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }) {
     { name: "Clientes", href: "/dashboard/clientes", icon: Users },
     { name: "Contratos de salida", href: "/dashboard/contratos-salida", icon: ClipboardList },
     { name: "Nueva Venta", href: "/dashboard/ventas", icon: FileText },
+    { name: "Reporte Ventas", href: "/dashboard/reporte-ventas", icon: BarChart3 },
     { name: "Pagos", href: "/dashboard/pagos", icon: CheckCircle2 },
     { name: "Cobradores", href: "/dashboard/cobradores", icon: HandCoins },
     { name: "Control tarjetas", href: "/dashboard/historial", icon: Clock },
@@ -40,7 +42,7 @@ export default function DashboardLayout({ children }) {
                 Plataforma Administrativa
               </div>
               <h1 className="mt-4 text-3xl md:text-4xl font-semibold tracking-tight text-slate-900">
-                Comercial "CHARITO"
+                Comercial &quot;CHARITO&quot;
               </h1>
               <p className="mt-2 text-base font-medium tracking-[0.08em] text-slate-500 uppercase">
                 Sistema de gestion de cobranza
@@ -66,7 +68,7 @@ export default function DashboardLayout({ children }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-10">
             {menuItems.map((item) => {
               const isActive =
                 pathname === item.href || (pathname === "/dashboard" && item.href === "/dashboard")

@@ -54,6 +54,23 @@ export const useReporteCobranza = () => {
 
   const aplicarFiltros = async () => {
     try {
+      if (tipoFecha === "simple" && !filtros.fecha) {
+        toast.warning("Selecciona una fecha")
+        return
+      }
+
+      if (tipoFecha === "rango") {
+        if (!filtros.fechaInicio || !filtros.fechaFin) {
+          toast.warning("Selecciona ambas fechas")
+          return
+        }
+
+        if (filtros.fechaInicio > filtros.fechaFin) {
+          toast.error("La fecha inicio no puede ser mayor que la fecha fin")
+          return
+        }
+      }
+
       const data = await getReporteCobranza({
         tipoFecha,
         ...filtros,
