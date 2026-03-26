@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
 import { Plus, Trash2 } from "lucide-react"
 import { productos } from "@/src/data/productos"
 import { useVentas } from "@/src/hooks/useVentas"
@@ -16,6 +17,9 @@ const DIAS_COBRANZA_SEMANAL = [
 const formatearMoneda = (monto) => `S/ ${Number(monto || 0).toFixed(2)}`
 
 const VentasForm = () => {
+  const [indiceProductoActivo, setIndiceProductoActivo] = useState(0)
+  const listaProductosRef = useRef(null)
+  const cerrarDropdownTimeoutRef = useRef(null)
   const {
     cobradores,
     formVenta,
@@ -46,6 +50,70 @@ const VentasForm = () => {
         ? "border-red-500 focus:border-red-500"
         : "border-slate-300 focus:border-sky-600"
     }`
+
+  useEffect(() => {
+    setIndiceProductoActivo(0)
+  }, [buscarProducto])
+
+  useEffect(() => {
+    if (!mostrarProductos || productosFiltrados.length === 0) return
+
+    setIndiceProductoActivo((prev) =>
+      Math.min(prev, productosFiltrados.length - 1)
+    )
+  }, [mostrarProductos, productosFiltrados])
+
+  useEffect(() => {
+    const lista = listaProductosRef.current
+    const itemActivo = lista?.querySelector('[data-activo="true"]')
+
+    if (itemActivo && typeof itemActivo.scrollIntoView === "function") {
+      itemActivo.scrollIntoView({ block: "nearest" })
+    }
+  }, [indiceProductoActivo])
+
+  useEffect(() => {
+    return () => {
+      if (cerrarDropdownTimeoutRef.current) {
+        clearTimeout(cerrarDropdownTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const manejarTecladoProductos = (e) => {
+    if (e.key === "Escape") {
+      setMostrarProductos(false)
+      return
+    }
+
+    if (!mostrarProductos || !buscarProducto) return
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      if (productosFiltrados.length === 0) return
+      setIndiceProductoActivo((prev) =>
+        prev >= productosFiltrados.length - 1 ? 0 : prev + 1
+      )
+      return
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault()
+      if (productosFiltrados.length === 0) return
+      setIndiceProductoActivo((prev) =>
+        prev <= 0 ? productosFiltrados.length - 1 : prev - 1
+      )
+      return
+    }
+
+    if (e.key === "Enter") {
+      if (productosFiltrados.length === 0) return
+      e.preventDefault()
+      agregarProducto(productosFiltrados[indiceProductoActivo])
+      return
+    }
+
+  }
 
   return (
     <div className="space-y-6">
@@ -211,17 +279,39 @@ const VentasForm = () => {
                     setBuscarProducto(convertirAMayusculas(e.target.value))
                     setMostrarProductos(true)
                   }}
-                className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
-              />
+                  onFocus={() => {
+                    if (cerrarDropdownTimeoutRef.current) {
+                      clearTimeout(cerrarDropdownTimeoutRef.current)
+                    }
+                    setMostrarProductos(true)
+                  }}
+                  onBlur={() => {
+                    cerrarDropdownTimeoutRef.current = setTimeout(() => {
+                      setMostrarProductos(false)
+                    }, 150)
+                  }}
+                  onKeyDown={manejarTecladoProductos}
+                  className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-800 focus:border-sky-600 focus:outline-none"
+                />
 
                 {mostrarProductos && buscarProducto && (
-                  <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white text-slate-800 shadow-lg">
+                  <ul
+                    ref={listaProductosRef}
+                    className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white text-slate-800 shadow-lg"
+                  >
                     {productosFiltrados.length > 0 ? (
-                      productosFiltrados.map((producto) => (
+                      productosFiltrados.map((producto, index) => (
                         <li
                           key={producto.id}
+                          data-activo={index === indiceProductoActivo}
+                          onMouseDown={(e) => e.preventDefault()}
                           onClick={() => agregarProducto(producto)}
-                          className="cursor-pointer px-4 py-2 hover:bg-slate-50"
+                          onMouseEnter={() => setIndiceProductoActivo(index)}
+                          className={`cursor-pointer px-4 py-2 ${
+                            index === indiceProductoActivo
+                              ? "bg-sky-50 text-sky-700"
+                              : "hover:bg-slate-50"
+                          }`}
                         >
                           {producto.nombre}
                         </li>

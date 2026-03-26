@@ -8,6 +8,22 @@ import {
   registrarVentaService,
 } from "@/src/services/ventasService";
 
+const repararTextoMojibake = (texto = "") => {
+  if (!/[ÃÂ�]/.test(texto)) return texto;
+
+  try {
+    return decodeURIComponent(escape(texto));
+  } catch {
+    return texto;
+  }
+};
+
+const normalizarTexto = (texto = "") =>
+  repararTextoMojibake(texto)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 export const useVentas = (productos = []) => {
   const [buscarProducto, setBuscarProducto] = useState("");
   const [mostrarProductos, setMostrarProductos] = useState(false);
@@ -41,7 +57,7 @@ export const useVentas = (productos = []) => {
   const productosFiltrados = useMemo(
     () =>
       productos.filter((p) =>
-        p.nombre.toLowerCase().includes(buscarProducto.toLowerCase())
+        normalizarTexto(p.nombre).includes(normalizarTexto(buscarProducto))
       ),
     [productos, buscarProducto]
   );
