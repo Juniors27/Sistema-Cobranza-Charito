@@ -5,6 +5,7 @@ export default function ClienteRow({
     venta,
     abrirModalDetalle,
     abrirModalEditar,
+    abrirModalRecogido,
     cambiarEstadoVenta,
     solicitarEliminarVenta,
     //calcularEstadoAutomatico,
@@ -56,25 +57,29 @@ export default function ClienteRow({
                         onClick={() => abrirModalDetalle(venta)}
                         className="rounded-lg bg-sky-100 p-2 text-sky-700 hover:bg-sky-200"
                         aria-label={`Ver detalle de ${venta.nombre} ${venta.apellido}`}
+                        title="Ver detalle"
                     >
                         <Eye className="w-4 h-4" />
                     </button>
 
                     <button
                         onClick={() => abrirModalEditar(venta)}
-                        className="rounded-lg bg-sky-100 p-2 text-sky-700 hover:bg-sky-200"
+                        className="rounded-lg bg-amber-100 p-2 text-amber-700 hover:bg-amber-200"
+                        title="Editar cliente"
                     >
                         <Edit className="w-4 h-4" />
                     </button>
 
                     <button
-                        onClick={() =>
-                            cambiarEstadoVenta(venta.numero_contrato, "recogido")
-                        }
+                        onClick={() => abrirModalRecogido(venta)}
                         disabled={venta.estado === "cancelado"}
+                        aria-label={`Marcar como recogido ${venta.nombre} ${venta.apellido}`}
+                        title={venta.estado === "recogido" ? "Gestionar recojo" : "Marcar como recogido"}
                         className={`p-2 rounded-lg ${venta.estado === "cancelado"
                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            : "bg-orange-100 text-orange-600 hover:bg-orange-200"
+                            : venta.estado === "recogido"
+                                ? "bg-orange-200 text-orange-700 hover:bg-orange-300"
+                                : "bg-orange-100 text-orange-600 hover:bg-orange-200"
                             }`}
                     >
                         <Package className="w-4 h-4" />
@@ -85,6 +90,8 @@ export default function ClienteRow({
                             cambiarEstadoVenta(venta.numero_contrato, "bajada")
                         }
                         disabled={venta.estado === "cancelado"}
+                        aria-label={`Marcar como bajada ${venta.nombre} ${venta.apellido}`}
+                        title="Marcar como bajada"
                         className={`p-2 rounded-lg ${venta.estado === "cancelado"
                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                             : "bg-slate-200 text-slate-700 hover:bg-slate-300"
@@ -95,6 +102,8 @@ export default function ClienteRow({
 
                     <button
                         onClick={() => solicitarEliminarVenta(venta)}
+                        aria-label={`Eliminar venta de ${venta.nombre} ${venta.apellido}`}
+                        title="Eliminar venta"
                         className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                     >
                         <Trash2 className="w-4 h-4" />

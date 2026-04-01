@@ -12,11 +12,8 @@ class ClientesPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class ListaClientesView(ListAPIView):
-    serializer_class = ClienteListSerializer
-    pagination_class = ClientesPagination
-
-    def get_queryset(self):
+class ClientesQuerysetMixin:
+    def get_clientes_queryset(self):
         ultimo_pago = Pago.objects.filter(
             venta=OuterRef("pk")
         ).order_by("-fecha_pago", "-fecha_registro")
@@ -46,3 +43,19 @@ class ListaClientesView(ListAPIView):
             ).distinct()
 
         return queryset
+
+
+class ListaClientesView(ClientesQuerysetMixin, ListAPIView):
+    serializer_class = ClienteListSerializer
+    pagination_class = ClientesPagination
+
+    def get_queryset(self):
+        return self.get_clientes_queryset()
+
+
+class ExportarClientesView(ClientesQuerysetMixin, ListAPIView):
+    serializer_class = ClienteListSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return self.get_clientes_queryset()

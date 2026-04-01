@@ -34,6 +34,7 @@ class ContratosSalidaListView(APIView):
     pagination_class = ContratosSalidaPagination
 
     def get(self, request):
+        estados_inactivos = ["recogido", "bajada", "cancelado"]
         periodo = request.query_params.get("periodo", "semana_laboral")
         fecha_inicio = request.query_params.get("fecha_inicio")
         fecha_fin = request.query_params.get("fecha_fin")
@@ -99,6 +100,10 @@ class ContratosSalidaListView(APIView):
             total=Count("id"),
             entregados=Count("id", filter=Q(entregado_cobrador=True)),
             ya_pagaron=Count("id", filter=Q(primer_pago_registrado=True)),
+            pendientes_primer_pago=Count(
+                "id",
+                filter=Q(primer_pago_registrado=False) & ~Q(estado__in=estados_inactivos),
+            ),
             saldo_total=Sum("saldo_pendiente"),
             cobradores=Count("cobrador_id", distinct=True),
         )
@@ -109,7 +114,7 @@ class ContratosSalidaListView(APIView):
             "total": total,
             "entregados": resumen_base["entregados"] or 0,
             "yaPagaron": ya_pagaron,
-            "pendientesPrimerPago": total - ya_pagaron,
+            "pendientesPrimerPago": resumen_base["pendientes_primer_pago"] or 0,
             "saldoTotal": resumen_base["saldo_total"] or 0,
             "cobradores": resumen_base["cobradores"] or 0,
         }
@@ -120,6 +125,10 @@ class ContratosSalidaListView(APIView):
                 total=Count("id"),
                 entregados=Count("id", filter=Q(entregado_cobrador=True)),
                 yaPagaron=Count("id", filter=Q(primer_pago_registrado=True)),
+                pendientes=Count(
+                    "id",
+                    filter=Q(primer_pago_registrado=False) & ~Q(estado__in=estados_inactivos),
+                ),
             )
             .order_by("-total", "cobrador__nombre", "cobrador__zona")
         )
@@ -132,7 +141,7 @@ class ContratosSalidaListView(APIView):
                 "total": item["total"],
                 "entregados": item["entregados"],
                 "yaPagaron": item["yaPagaron"],
-                "pendientes": item["total"] - item["yaPagaron"],
+                "pendientes": item["pendientes"],
             }
             for item in grupos
             if item["cobrador_id"] is not None

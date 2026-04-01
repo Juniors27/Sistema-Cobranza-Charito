@@ -55,13 +55,18 @@ export const clientesService = {
 }
 
 
-export const cambiarEstadoVentaService  = async (ventaId, nuevoEstado) => {
+export const cambiarEstadoVentaService  = async (ventaId, payload) => {
+  const body =
+    typeof payload === "string"
+      ? { estado: payload }
+      : payload
+
   const response = await fetch(`${API.ventas.root}${ventaId}/`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ estado: nuevoEstado }),
+    body: JSON.stringify(body),
   })
 
   const data = await response.json()
@@ -79,20 +84,20 @@ export const exportarClientesFiltradosService = async ({
   search = "",
   zona = "todas",
 } = {}) => {
-  const params = new URLSearchParams({
-    page: "1",
-    page_size: "5000",
-  })
+  const params = new URLSearchParams()
 
   if (search) params.append("search", search)
   if (zona && zona !== "todas") params.append("zona", zona)
 
-  const response = await fetch(`${API.clientes.lista}?${params.toString()}`)
+  const url = params.toString()
+    ? `${API.clientes.exportar}?${params.toString()}`
+    : API.clientes.exportar
+
+  const response = await fetch(url)
 
   if (!response.ok) {
     throw new Error("Error al exportar clientes")
   }
 
-  const data = await response.json()
-  return data.results || []
+  return response.json()
 }

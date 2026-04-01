@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db.models import Sum
+from django.utils import timezone
 from rest_framework import serializers
 from ..models.venta import Venta, VentaItem
 from ..models.producto import Producto
@@ -53,6 +54,7 @@ class VentaSerializer(serializers.ModelSerializer):
             "fecha_inicial",
             "fecha_primer_cobro",
             "primer_pago_registrado",
+            "fecha_recogido",
             "vendedor",
             "cobrador",
             "cobrador_nombre",
@@ -104,10 +106,25 @@ class VentaSerializer(serializers.ModelSerializer):
     def validate(self, data):
         inicial = data.get("inicial", getattr(self.instance, "inicial", Decimal("0.00")))
         monto = data.get("monto", getattr(self.instance, "monto", None))
+        estado = data.get("estado", getattr(self.instance, "estado", None))
+        fecha_recogido = data.get(
+            "fecha_recogido",
+            getattr(self.instance, "fecha_recogido", None),
+        )
 
         if monto is not None and inicial > monto:
             raise serializers.ValidationError({
                 "inicial": "El inicial no puede ser mayor al monto total"
+            })
+
+        if estado == "recogido" and not fecha_recogido:
+            raise serializers.ValidationError({
+                "fecha_recogido": "La fecha de recojo es obligatoria al marcar como recogido"
+            })
+
+        if estado != "recogido" and "fecha_recogido" in data and data["fecha_recogido"]:
+            raise serializers.ValidationError({
+                "fecha_recogido": "La fecha de recojo solo aplica cuando el estado es recogido"
             })
 
         productos = self.initial_data.get("productos")
@@ -175,6 +192,12 @@ class VentaSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         productos_data = validated_data.pop("productos", None)
         producto_data = validated_data.pop("producto", None)
+        estado_solicitado = validated_data.get("estado", instance.estado)
+
+        if estado_solicitado == "recogido":
+            validated_data.setdefault("fecha_recogido", instance.fecha_recogido or timezone.localdate())
+        elif "estado" in validated_data and estado_solicitado != "recogido":
+            validated_data["fecha_recogido"] = None
 
         if "monto" in validated_data or "inicial" in validated_data:
             monto = validated_data.get("monto", instance.monto)
@@ -362,6 +385,7 @@ class VentaListLiteSerializer(serializers.ModelSerializer):
             "fecha_inicial",
             "fecha_primer_cobro",
             "primer_pago_registrado",
+            "fecha_recogido",
             "vendedor",
             "cobrador",
             "cobrador_nombre",
@@ -402,6 +426,7 @@ class VentaDashboardSerializer(serializers.ModelSerializer):
             "fecha_inicial",
             "fecha_primer_cobro",
             "primer_pago_registrado",
+            "fecha_recogido",
             "cobrador",
             "cobrador_nombre",
             "estado",

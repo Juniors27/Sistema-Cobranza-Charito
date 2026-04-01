@@ -91,6 +91,7 @@ class Venta(models.Model):
     fecha_primer_cobro = models.DateField(blank=True, null=True)
     entregado_cobrador = models.BooleanField(default=False)
     fecha_entrega_cobrador = models.DateField(blank=True, null=True)
+    fecha_recogido = models.DateField(blank=True, null=True)
 
     vendedor = models.CharField(max_length=100, blank=True, null=True)
     cobrador = models.ForeignKey(

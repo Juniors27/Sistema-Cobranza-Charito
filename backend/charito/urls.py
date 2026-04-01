@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from charito.views.cobrador import CobradorViewSet, CobradorListView
 from charito.views.venta import VentaViewSet, VentaListView, ValidarContratoView, ProgramacionPrimerCobroView
-from charito.views.cliente import ListaClientesView
+from charito.views.cliente import ExportarClientesView, ListaClientesView
 from charito.views.contratos_salida import ContratosSalidaListView
 from charito.views.control_tarjetas import ControlTarjetasListView
 from charito.views.pago import RegistrarPagoView, ListarPagosView, ReporteCobranzaView, HistorialPagosVentaView, EditarPagoView, EliminarPagoView, ObtenerUltimoPagoView
@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/lista/ventas/', VentaListView.as_view(), name='ventas-list'),
     path('api/lista/cobradores/', CobradorListView.as_view(), name='cobradores-list'),
     path("api/lista/clientes/", ListaClientesView.as_view(), name="lista-clientes"),
+    path("api/exportar/clientes/", ExportarClientesView.as_view(), name="exportar-clientes"),
     path("api/lista/contratos-salida/", ContratosSalidaListView.as_view(), name="lista-contratos-salida"),
     path("api/lista/control-tarjetas/", ControlTarjetasListView.as_view(), name="lista-control-tarjetas"),
     path('api/pagos/registrar/', RegistrarPagoView.as_view(), name='registrar-pago'),

@@ -88,6 +88,15 @@ export default function ClienteDetalleModal({
                 {ventaDetalle.cobrador_nombre?.toUpperCase() || "N/A"} / {ventaDetalle.dia_cobro || "N/A"}
               </p>
             </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Fecha de recojo</p>
+              <p className="mt-2 text-base font-medium">
+                {ventaDetalle.fecha_recogido
+                  ? formatearFechaDMY(ventaDetalle.fecha_recogido)
+                  : "No registrado"}
+              </p>
+            </div>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white">

@@ -25,6 +25,7 @@ export const API = {
 
   clientes: {
     lista: `${API_BASE_URL}/lista/clientes/`,
+    exportar: `${API_BASE_URL}/exportar/clientes/`,
   },
 
   pagos: {

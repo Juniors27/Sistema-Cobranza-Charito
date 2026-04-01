@@ -140,6 +140,7 @@ class VentaListView(ListAPIView):
                 "fecha_inicial",
                 "fecha_primer_cobro",
                 "primer_pago_registrado",
+                "fecha_recogido",
                 "cobrador",
                 "cobrador__nombre",
                 "estado",

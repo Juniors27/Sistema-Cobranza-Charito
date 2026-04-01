@@ -11,6 +11,14 @@ import { getVentaDetalle } from "@/src/services/ventasService";
 import { obtenerCobradores } from "@/src/services/cobradoresService";
 import { exportarExcel as exportarExcelUtil } from "@/src/utils/clientesUtils";
 
+const obtenerFechaActualISO = () => {
+  const hoy = new Date();
+  const year = hoy.getFullYear();
+  const month = String(hoy.getMonth() + 1).padStart(2, "0");
+  const day = String(hoy.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export const useClientes = () => {
   const [ventas, setVentas] = useState([]);
   const [cobradores, setCobradores] = useState([]);
@@ -34,6 +42,13 @@ export const useClientes = () => {
   const [modalEliminar, setModalEliminar] = useState(false);
   const [ventaEliminar, setVentaEliminar] = useState(null);
   const [eliminandoVenta, setEliminandoVenta] = useState(false);
+  const [modalRecogido, setModalRecogido] = useState(false);
+  const [ventaRecogido, setVentaRecogido] = useState(null);
+  const [guardandoRecogido, setGuardandoRecogido] = useState(false);
+  const [formRecogido, setFormRecogido] = useState({
+    accion: "marcar",
+    fechaRecogido: obtenerFechaActualISO(),
+  });
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -79,20 +94,99 @@ export const useClientes = () => {
     cargarDatos();
   }, [cargarDatos]);
 
-  const cambiarEstadoVenta = async (numero_contrato, estadoObjetivo) => {
+  const cambiarEstadoVenta = async (numero_contrato, estadoObjetivo, opciones = {}) => {
     try {
       const venta = ventas.find((v) => v.numero_contrato === numero_contrato);
 
-      if (!venta) return toast.error("No se encontró la venta");
-      if (venta.estado === "cancelado") return toast.error("La venta está cancelada");
+      if (!venta) {
+        toast.error("No se encontró la venta");
+        return false;
+      }
+      if (venta.estado === "cancelado") {
+        toast.error("La venta está cancelada");
+        return false;
+      }
 
-      const nuevoEstado = venta.estado === estadoObjetivo ? "pendiente" : estadoObjetivo;
+      const { forzarEstado = false, ...payloadExtra } = opciones;
+      const payload =
+        venta.estado === estadoObjetivo && !forzarEstado
+          ? { estado: "pendiente", fecha_recogido: null }
+          : { estado: estadoObjetivo, ...payloadExtra };
 
-      await cambiarEstadoVentaService(venta.id, nuevoEstado);
+      await cambiarEstadoVentaService(venta.id, payload);
       await cargarDatos();
       toast.success("Estado actualizado");
-    } catch {
-      toast.error("Error al cambiar el estado");
+      return true;
+    } catch (error) {
+      toast.error(error.message || "Error al cambiar el estado");
+      return false;
+    }
+  };
+
+  const abrirModalRecogido = (venta) => {
+    if (!venta) return;
+
+    const estaRecogido = venta.estado === "recogido";
+    setVentaRecogido(venta);
+    setFormRecogido({
+      accion: estaRecogido ? "actualizar" : "marcar",
+      fechaRecogido: venta.fecha_recogido || obtenerFechaActualISO(),
+    });
+    setModalRecogido(true);
+  };
+
+  const cerrarModalRecogido = () => {
+    if (guardandoRecogido) return;
+
+    setModalRecogido(false);
+    setVentaRecogido(null);
+    setFormRecogido({
+      accion: "marcar",
+      fechaRecogido: obtenerFechaActualISO(),
+    });
+  };
+
+  const actualizarFormRecogido = (campo, valor) => {
+    setFormRecogido((prev) => ({
+      ...prev,
+      [campo]: valor,
+    }));
+  };
+
+  const confirmarCambioRecogido = async () => {
+    if (!ventaRecogido) return;
+
+    if (
+      (formRecogido.accion === "marcar" || formRecogido.accion === "actualizar") &&
+      !formRecogido.fechaRecogido
+    ) {
+      toast.error("Selecciona la fecha de recojo");
+      return;
+    }
+
+    try {
+      setGuardandoRecogido(true);
+      let actualizado = false;
+
+      if (formRecogido.accion === "revertir") {
+        actualizado = await cambiarEstadoVenta(ventaRecogido.numero_contrato, "recogido");
+      } else {
+        actualizado = await cambiarEstadoVenta(ventaRecogido.numero_contrato, "recogido", {
+          forzarEstado: true,
+          fecha_recogido: formRecogido.fechaRecogido,
+        });
+      }
+
+      if (!actualizado) return;
+
+      setModalRecogido(false);
+      setVentaRecogido(null);
+      setFormRecogido({
+        accion: "marcar",
+        fechaRecogido: obtenerFechaActualISO(),
+      });
+    } finally {
+      setGuardandoRecogido(false);
     }
   };
 
@@ -345,6 +439,10 @@ export const useClientes = () => {
     indiceFin,
     totalRegistros,
     eliminandoVenta,
+    modalRecogido,
+    ventaRecogido,
+    guardandoRecogido,
+    formRecogido,
     setSearchTerm,
     setZonaFiltro,
     setModalEditar,
@@ -353,6 +451,10 @@ export const useClientes = () => {
     setMostrarProductosEdit,
     cargarDatos,
     cambiarEstadoVenta,
+    abrirModalRecogido,
+    cerrarModalRecogido,
+    actualizarFormRecogido,
+    confirmarCambioRecogido,
     abrirModalDetalle,
     cerrarModalDetalle,
     abrirModalEditar,
