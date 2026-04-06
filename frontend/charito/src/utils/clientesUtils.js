@@ -2,8 +2,17 @@ import * as XLSX from "xlsx"
 import { toast } from "sonner"
 
 
+export const obtenerFechaActualISO = () => {
+  const hoy = new Date()
+  const year = hoy.getFullYear()
+  const month = String(hoy.getMonth() + 1).padStart(2, "0")
+  const day = String(hoy.getDate()).padStart(2, "0")
+
+  return `${year}-${month}-${day}`
+}
+
 //FORMATEA FECHA PARA QUE SEA DD/MM/AAAA
-export const formatearFechaDMY = (fecha) => {
+export const formatearFechaDMY = (fecha, separador = "/") => {
   if (!fecha) return "";
 
   let dateObj = fecha;
@@ -21,7 +30,7 @@ export const formatearFechaDMY = (fecha) => {
   const m = String(dateObj.getMonth() + 1).padStart(2, "0");
   const y = dateObj.getFullYear();
 
-  return `${d}/${m}/${y}`;
+  return `${d}${separador}${m}${separador}${y}`;
 };
 
 export const obtenerFechaReferenciaPago = (venta) => {

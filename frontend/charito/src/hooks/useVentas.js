@@ -7,6 +7,7 @@ import {
   validarContratoService,
   registrarVentaService,
 } from "@/src/services/ventasService";
+import { obtenerFechaActualISO } from "@/src/utils/clientesUtils";
 
 const repararTextoMojibake = (texto = "") => {
   if (!/[ÃÂ�]/.test(texto)) return texto;
@@ -45,7 +46,7 @@ export const useVentas = (productos = []) => {
     montoFrecuencia: "",
     diaCobro: "",
     vendedor: "",
-    fechaVenta: new Date().toISOString().split("T")[0],
+    fechaVenta: obtenerFechaActualISO(),
     fechaPrimerCobro: "",
     monto: "",
     dioInicial: false,

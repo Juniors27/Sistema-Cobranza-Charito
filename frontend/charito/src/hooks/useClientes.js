@@ -9,15 +9,10 @@ import { getHistorialPagos } from "@/src/services/reporteService";
 import { productos } from "@/src/data/productos";
 import { getVentaDetalle } from "@/src/services/ventasService";
 import { obtenerCobradores } from "@/src/services/cobradoresService";
-import { exportarExcel as exportarExcelUtil } from "@/src/utils/clientesUtils";
-
-const obtenerFechaActualISO = () => {
-  const hoy = new Date();
-  const year = hoy.getFullYear();
-  const month = String(hoy.getMonth() + 1).padStart(2, "0");
-  const day = String(hoy.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import {
+  exportarExcel as exportarExcelUtil,
+  obtenerFechaActualISO,
+} from "@/src/utils/clientesUtils";
 
 export const useClientes = () => {
   const [ventas, setVentas] = useState([]);

@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { validarFechaNoFutura } from "@/src/utils/pagosUtils";
+import {
+  validarFechaNoFutura,
+} from "@/src/utils/pagosUtils";
+import { obtenerFechaActualISO } from "@/src/utils/clientesUtils";
 import {
   buscarUltimoPagoService,
   registrarPagoService,
@@ -16,7 +19,7 @@ export const usePagos = () => {
   const [ventas, setVentas] = useState([]);
   const [cobradores, setCobradores] = useState([]);
   const [fechaPagoBatch, setFechaPagoBatch] = useState(
-    new Date().toISOString().split("T")[0],
+    obtenerFechaActualISO(),
   );
   const [cobradorBatch, setCobradorBatch] = useState("");
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -61,7 +64,7 @@ export const usePagos = () => {
     setModoEdicion(false);
     setPagoEditando(null);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
-    setFechaPagoBatch(new Date().toISOString().split("T")[0]);
+    setFechaPagoBatch(obtenerFechaActualISO());
     setCobradorBatch("");
   };
 
