@@ -7,6 +7,7 @@ import { useVentas } from "@/src/hooks/useVentas"
 import { SectionHeader } from "@/components/ui"
 
 const convertirAMayusculas = (valor) => valor.toUpperCase()
+const soloNumeros = (valor) => valor.replace(/\D/g, "")
 const DIAS_COBRANZA_SEMANAL = [
   "DOMINGO",
   "LUNES",
@@ -18,6 +19,7 @@ const formatearMoneda = (monto) => `S/ ${Number(monto || 0).toFixed(2)}`
 
 const VentasForm = () => {
   const [indiceProductoActivo, setIndiceProductoActivo] = useState(0)
+  const contratoInputRef = useRef(null)
   const listaProductosRef = useRef(null)
   const cerrarDropdownTimeoutRef = useRef(null)
   const {
@@ -54,6 +56,10 @@ const VentasForm = () => {
     productosFiltrados.length > 0
       ? Math.min(indiceProductoActivo, productosFiltrados.length - 1)
       : 0
+
+  useEffect(() => {
+    contratoInputRef.current?.focus()
+  }, [])
 
   useEffect(() => {
     const lista = listaProductosRef.current
@@ -107,6 +113,14 @@ const VentasForm = () => {
 
   }
 
+  const handleRegistrarVenta = async () => {
+    const ventaRegistrada = await registrarVenta()
+
+    if (ventaRegistrada) {
+      contratoInputRef.current?.focus()
+    }
+  }
+
   return (
     <div className="space-y-6">
       <SectionHeader
@@ -123,16 +137,18 @@ const VentasForm = () => {
           <div className="space-y-4">
             <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  {"N\u00famero de Contrato *"}
+                  {"Número de Contrato *"}
                 </label>
               <input
+                ref={contratoInputRef}
                 type="text"
+                inputMode="numeric"
                 placeholder="1234"
                 value={formVenta.numeroContrato}
                 onChange={(e) => {
                   setFormVenta({
                     ...formVenta,
-                    numeroContrato: convertirAMayusculas(e.target.value),
+                    numeroContrato: soloNumeros(e.target.value),
                   })
                   limpiarErrorCampo("numeroContrato")
                 }}
@@ -658,7 +674,7 @@ const VentasForm = () => {
             </div>
 
             <button
-              onClick={registrarVenta}
+              onClick={handleRegistrarVenta}
               className="flex w-full items-center justify-center rounded-xl bg-sky-700 p-4 text-lg font-semibold text-white transition-colors hover:bg-sky-800"
             >
               <Plus className="mr-2 h-6 w-6" />

@@ -1,6 +1,5 @@
 import { useRef } from "react"
 import { CheckCircle, Edit2, Trash2, X } from "lucide-react"
-import { usePagos } from "@/src/hooks/usePagos"
 import { formatearFechaDMY } from "@/src/utils/clientesUtils"
 
 export default function PagosForm(props) {

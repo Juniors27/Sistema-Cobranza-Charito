@@ -1,12 +1,14 @@
 "use client"
 
-import { Plus, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 
 export default function ClienteEditModal({
   ventaEditar,
   setVentaEditar,
   guardarEdicion,
   setModalEditar,
+  errorContratoEditar,
+  setErrorContratoEditar,
   cobradores,
   productos,
   buscarProductoEdit,
@@ -34,10 +36,20 @@ export default function ClienteEditModal({
             <label className="mb-2 block text-sm font-semibold">Número de Contrato</label>
             <input
               type="text"
+              inputMode="numeric"
               value={ventaEditar.numero_contrato}
-              disabled
+              onChange={(e) => {
+                setVentaEditar({
+                  ...ventaEditar,
+                  numero_contrato: e.target.value.replace(/\D/g, ""),
+                })
+                if (errorContratoEditar) setErrorContratoEditar("")
+              }}
               className="w-full rounded-xl border-2 border-gray-200 p-3"
             />
+            {errorContratoEditar && (
+              <p className="mt-1 text-sm text-red-500">{errorContratoEditar}</p>
+            )}
           </div>
 
           <div>
@@ -86,7 +98,7 @@ export default function ClienteEditModal({
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold">Dirección</label>
+            <label className="mb-2 block text-sm font-semibold">DirecciÃ³n</label>
             <input
               type="text"
               value={ventaEditar.direccion}
@@ -211,7 +223,8 @@ export default function ClienteEditModal({
               ))}
 
               <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-600">
-                Total de productos: <span className="font-semibold text-slate-900">S/ {totalProductos.toFixed(2)}</span>
+                Total de productos:{" "}
+                <span className="font-semibold text-slate-900">S/ {totalProductos.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -258,7 +271,7 @@ export default function ClienteEditModal({
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-700">Día de Cobranza</label>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">DÃ­a de Cobranza</label>
             <input
               type="text"
               value={ventaEditar.dia_cobro || ""}

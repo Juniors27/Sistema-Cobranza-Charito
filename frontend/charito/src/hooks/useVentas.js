@@ -25,6 +25,8 @@ const normalizarTexto = (texto = "") =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
+const sanitizarNumeroContrato = (valor = "") => valor.replace(/\D/g, "");
+
 export const useVentas = (productos = []) => {
   const [buscarProducto, setBuscarProducto] = useState("");
   const [mostrarProductos, setMostrarProductos] = useState(false);
@@ -148,13 +150,15 @@ export const useVentas = (productos = []) => {
   };
 
   const validarContrato = async (numeroContrato) => {
-    if (!numeroContrato) {
+    const contratoLimpio = sanitizarNumeroContrato(numeroContrato);
+
+    if (!contratoLimpio) {
       setErrorContrato("");
       return false;
     }
 
     try {
-      const existe = await validarContratoService(numeroContrato);
+      const existe = await validarContratoService(contratoLimpio);
 
       if (existe) {
         setErrorContrato("Contrato ya est\u00e1 registrado");
@@ -241,7 +245,7 @@ export const useVentas = (productos = []) => {
       }
 
       const payload = {
-        numero_contrato: formVenta.numeroContrato,
+        numero_contrato: sanitizarNumeroContrato(formVenta.numeroContrato),
         fecha_venta: formVenta.fechaVenta,
         nombre: formVenta.nombre,
         apellido: formVenta.apellido,

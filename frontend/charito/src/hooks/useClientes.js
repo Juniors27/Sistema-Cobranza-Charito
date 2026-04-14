@@ -7,7 +7,7 @@ import {
 } from "@/src/services/clientesService";
 import { getHistorialPagos } from "@/src/services/reporteService";
 import { productos } from "@/src/data/productos";
-import { getVentaDetalle } from "@/src/services/ventasService";
+import { getVentaDetalle, validarContratoService } from "@/src/services/ventasService";
 import { obtenerCobradores } from "@/src/services/cobradoresService";
 import {
   exportarExcel as exportarExcelUtil,
@@ -15,6 +15,7 @@ import {
 } from "@/src/utils/clientesUtils";
 
 export const useClientes = () => {
+  const sanitizarNumeroContrato = (valor = "") => valor.replace(/\D/g, "");
   const [ventas, setVentas] = useState([]);
   const [cobradores, setCobradores] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +25,7 @@ export const useClientes = () => {
   const [ventaEditar, setVentaEditar] = useState(null);
   const [modalDetalle, setModalDetalle] = useState(false);
   const [ventaDetalle, setVentaDetalle] = useState(null);
+  const [errorContratoEditar, setErrorContratoEditar] = useState("");
   const [historialPagos, setHistorialPagos] = useState([]);
   const [cargandoHistorial, setCargandoHistorial] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -208,9 +210,14 @@ export const useClientes = () => {
 
       setVentaEditar({
         ...ventaDetallada,
+        numero_contrato: sanitizarNumeroContrato(String(ventaDetallada.numero_contrato ?? "")),
+        numero_contrato_original: sanitizarNumeroContrato(
+          String(ventaDetallada.numero_contrato ?? "")
+        ),
         monto_frecuencia: ventaDetallada.monto_frecuencia ?? "",
         productos: productosVenta,
       });
+      setErrorContratoEditar("");
       setBuscarProductoEdit("");
       setMostrarProductosEdit(false);
       setModalEditar(true);
@@ -298,6 +305,25 @@ export const useClientes = () => {
 
   const guardarEdicion = async () => {
     try {
+      const numeroContrato = sanitizarNumeroContrato(ventaEditar?.numero_contrato);
+      const numeroContratoOriginal = sanitizarNumeroContrato(
+        ventaEditar?.numero_contrato_original
+      );
+
+      if (!numeroContrato) {
+        return toast.error("Ingresa el numero de contrato");
+      }
+
+      if (numeroContrato !== numeroContratoOriginal) {
+        const existe = await validarContratoService(numeroContrato);
+        if (existe) {
+          setErrorContratoEditar("Contrato ya está registrado");
+          return toast.error("El numero de contrato ya existe");
+        }
+      }
+
+      setErrorContratoEditar("");
+
       if (!ventaEditar.nombre || !ventaEditar.apellido || !ventaEditar.direccion) {
         return toast.error("Completa los campos obligatorios");
       }
@@ -318,8 +344,11 @@ export const useClientes = () => {
         return toast.error("Revisa cantidad y monto de los productos");
       }
 
+      const { numero_contrato_original, ...ventaSinContratoOriginal } = ventaEditar;
+
       const ventaActualizada = {
-        ...ventaEditar,
+        ...ventaSinContratoOriginal,
+        numero_contrato: numeroContrato,
         monto_frecuencia:
           ventaEditar.monto_frecuencia === "" || ventaEditar.monto_frecuencia === null
             ? null
@@ -345,8 +374,8 @@ export const useClientes = () => {
       await cargarDatos();
       setModalEditar(false);
       toast.success("Cliente actualizado");
-    } catch {
-      toast.error("Error al actualizar");
+    } catch (error) {
+      toast.error(error.message || "Error al actualizar");
     }
   };
 
@@ -416,6 +445,7 @@ export const useClientes = () => {
     zonaFiltro,
     modalEditar,
     ventaEditar,
+    errorContratoEditar,
     modalDetalle,
     modalEliminar,
     ventaDetalle,
@@ -442,6 +472,7 @@ export const useClientes = () => {
     setZonaFiltro,
     setModalEditar,
     setVentaEditar,
+    setErrorContratoEditar,
     setBuscarProductoEdit,
     setMostrarProductosEdit,
     cargarDatos,
