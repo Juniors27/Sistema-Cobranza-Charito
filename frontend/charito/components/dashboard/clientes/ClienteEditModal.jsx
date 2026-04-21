@@ -98,7 +98,7 @@ export default function ClienteEditModal({
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold">DirecciÃ³n</label>
+            <label className="mb-2 block text-sm font-semibold">Dirección</label>
             <input
               type="text"
               value={ventaEditar.direccion}
@@ -241,6 +241,20 @@ export default function ClienteEditModal({
           </div>
 
           <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Pago inicial
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={ventaEditar.inicial ?? ""}
+              onChange={(e) => setVentaEditar({ ...ventaEditar, inicial: e.target.value })}
+              className="w-full rounded-xl border-2 border-gray-200 p-3"
+            />
+          </div>
+
+          <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">Forma de Pago *</label>
             <select
               value={ventaEditar.frecuencia_pago}
@@ -271,7 +285,7 @@ export default function ClienteEditModal({
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-700">DÃ­a de Cobranza</label>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">Día de Cobranza</label>
             <input
               type="text"
               value={ventaEditar.dia_cobro || ""}

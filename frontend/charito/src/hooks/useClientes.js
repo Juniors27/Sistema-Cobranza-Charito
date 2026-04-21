@@ -329,6 +329,15 @@ export const useClientes = () => {
       }
 
       if (!ventaEditar.cobrador) return toast.error("Selecciona un cobrador");
+      if (Number(ventaEditar.monto || 0) <= 0) {
+        return toast.error("Ingresa un saldo actual valido");
+      }
+      if (Number(ventaEditar.inicial || 0) < 0) {
+        return toast.error("El pago inicial no puede ser negativo");
+      }
+      if (Number(ventaEditar.inicial || 0) > Number(ventaEditar.monto || 0)) {
+        return toast.error("El pago inicial no puede ser mayor al saldo actual");
+      }
       if (!ventaEditar.productos || ventaEditar.productos.length === 0) {
         return toast.error("Agrega al menos un producto");
       }
@@ -353,6 +362,8 @@ export const useClientes = () => {
           ventaEditar.monto_frecuencia === "" || ventaEditar.monto_frecuencia === null
             ? null
             : Number(ventaEditar.monto_frecuencia),
+        inicial: Number(ventaEditar.inicial || 0),
+        monto: Number(ventaEditar.monto || 0),
         productos: ventaEditar.productos.map((producto) => ({
           nombre: producto.nombre,
           categoria: producto.categoria || "otros",

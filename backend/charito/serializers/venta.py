@@ -193,6 +193,7 @@ class VentaSerializer(serializers.ModelSerializer):
         productos_data = validated_data.pop("productos", None)
         producto_data = validated_data.pop("producto", None)
         estado_solicitado = validated_data.get("estado", instance.estado)
+        inicial_actualizado = "inicial" in validated_data
 
         if estado_solicitado == "recogido":
             validated_data.setdefault("fecha_recogido", instance.fecha_recogido or timezone.localdate())
@@ -207,6 +208,20 @@ class VentaSerializer(serializers.ModelSerializer):
                 or Decimal("0.00")
             )
             validated_data["saldo_pendiente"] = monto - inicial - pagos_total
+
+        if inicial_actualizado:
+            inicial = validated_data.get("inicial", instance.inicial)
+            primer_pago_real = instance.pagos.order_by("fecha_pago", "fecha_registro").first()
+
+            if inicial > 0:
+                validated_data["primer_pago_registrado"] = True
+                validated_data["fecha_inicial"] = instance.fecha_venta
+            elif primer_pago_real:
+                validated_data["primer_pago_registrado"] = True
+                validated_data["fecha_inicial"] = primer_pago_real.fecha_pago
+            else:
+                validated_data["primer_pago_registrado"] = False
+                validated_data["fecha_inicial"] = None
 
         instance = super().update(instance, validated_data)
 
