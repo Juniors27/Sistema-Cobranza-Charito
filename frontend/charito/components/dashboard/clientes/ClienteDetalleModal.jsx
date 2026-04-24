@@ -3,6 +3,7 @@
 import { X } from "lucide-react"
 import { calcularTotalPagado } from "@/src/utils/reporteUtils"
 import { formatearFechaDMY } from "@/src/utils/clientesUtils"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 export default function ClienteDetalleModal({
   ventaDetalle,
@@ -23,7 +24,8 @@ export default function ClienteDetalleModal({
               </p>
               <h2 className="mt-2 text-lg font-medium text-slate-200">Detalle del cliente</h2>
               <p className="mt-3 text-3xl font-semibold tracking-[0.08em] text-white md:text-4xl">
-                {ventaDetalle.numero_contrato}
+                {ventaDetalle.codigo_contrato ||
+                  formatearCodigoContrato(ventaDetalle.lote, ventaDetalle.numero_contrato)}
               </p>
             </div>
 

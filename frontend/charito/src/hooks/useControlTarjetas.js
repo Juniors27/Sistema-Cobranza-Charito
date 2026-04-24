@@ -19,7 +19,11 @@ export const useControlTarjetas = () => {
     buenos: 0,
     promesas_vencidas: 0,
   })
-  const [searchTerm, setSearchTerm] = useState("")
+  const [filtrosBusqueda, setFiltrosBusqueda] = useState({
+    lote: "",
+    numeroContrato: "",
+    nombreCliente: "",
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filtro, setFiltro] = useState("todos")
@@ -48,7 +52,9 @@ export const useControlTarjetas = () => {
       const data = await getControlTarjetas({
         page: paginaActual,
         pageSize: registrosPorPagina,
-        search: searchTerm,
+        lote: filtrosBusqueda.lote,
+        numeroContrato: filtrosBusqueda.numeroContrato,
+        nombreCliente: filtrosBusqueda.nombreCliente,
         filtro,
       })
 
@@ -68,7 +74,7 @@ export const useControlTarjetas = () => {
     } finally {
       setLoading(false)
     }
-  }, [paginaActual, registrosPorPagina, searchTerm, filtro])
+  }, [paginaActual, registrosPorPagina, filtrosBusqueda, filtro])
 
   useEffect(() => {
     cargarDatos()
@@ -76,7 +82,7 @@ export const useControlTarjetas = () => {
 
   useEffect(() => {
     setPaginaActual(1)
-  }, [searchTerm, filtro])
+  }, [filtrosBusqueda, filtro])
 
   const abrirModalObservaciones = async (venta) => {
     try {
@@ -201,7 +207,9 @@ export const useControlTarjetas = () => {
       const data = await getControlTarjetas({
         page: 1,
         pageSize: 5000,
-        search: searchTerm,
+        lote: filtrosBusqueda.lote,
+        numeroContrato: filtrosBusqueda.numeroContrato,
+        nombreCliente: filtrosBusqueda.nombreCliente,
         filtro,
       })
       exportarControlTarjetasExcel(data.results || [])
@@ -241,7 +249,7 @@ export const useControlTarjetas = () => {
     conteos,
     loading,
     error,
-    searchTerm,
+    filtrosBusqueda,
     filtro,
     modalObservacionesAbierto,
     ventaObservaciones,
@@ -258,7 +266,7 @@ export const useControlTarjetas = () => {
     iniciarEdicionObservacion,
     cancelarEdicionObservacion,
     borrarObservacion,
-    setSearchTerm,
+    setFiltrosBusqueda,
     setFiltro,
     setFormObservacion,
     paginaActual,

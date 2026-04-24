@@ -8,6 +8,8 @@ from ..models.cobrador import Cobrador
 
 
 class VentaSerializer(serializers.ModelSerializer):
+    lote = serializers.CharField(read_only=True)
+    codigo_contrato = serializers.CharField(read_only=True)
     cobrador_nombre = serializers.CharField(source="cobrador.nombre", read_only=True)
     cliente = serializers.SerializerMethodField()
     producto_nombre = serializers.SerializerMethodField()
@@ -30,7 +32,9 @@ class VentaSerializer(serializers.ModelSerializer):
         model = Venta
         fields = [
             "id",
+            "lote",
             "numero_contrato",
+            "codigo_contrato",
             "fecha_venta",
             "nombre",
             "apellido",
@@ -104,6 +108,12 @@ class VentaSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        numero_contrato = data.get(
+            "numero_contrato",
+            getattr(self.instance, "numero_contrato", None),
+        )
+        fecha_venta = data.get("fecha_venta", getattr(self.instance, "fecha_venta", None))
+        lote = Venta.generar_lote(fecha_venta)
         inicial = data.get("inicial", getattr(self.instance, "inicial", Decimal("0.00")))
         monto = data.get("monto", getattr(self.instance, "monto", None))
         estado = data.get("estado", getattr(self.instance, "estado", None))
@@ -126,6 +136,16 @@ class VentaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "fecha_recogido": "La fecha de recojo solo aplica cuando el estado es recogido"
             })
+
+        if numero_contrato and lote:
+            qs = Venta.objects.filter(lote=lote, numero_contrato=numero_contrato)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
+                raise serializers.ValidationError({
+                    "numero_contrato": f"El contrato {lote}-{numero_contrato} ya esta registrado"
+                })
 
         productos = self.initial_data.get("productos")
         if productos:
@@ -171,6 +191,7 @@ class VentaSerializer(serializers.ModelSerializer):
 
         monto = validated_data.get("monto", Decimal("0.00"))
         inicial = validated_data.get("inicial", Decimal("0.00"))
+        validated_data["lote"] = Venta.generar_lote(validated_data.get("fecha_venta"))
         validated_data["saldo_pendiente"] = monto - inicial
 
         if inicial > 0:
@@ -208,6 +229,9 @@ class VentaSerializer(serializers.ModelSerializer):
                 or Decimal("0.00")
             )
             validated_data["saldo_pendiente"] = monto - inicial - pagos_total
+
+        if "fecha_venta" in validated_data:
+            validated_data["lote"] = Venta.generar_lote(validated_data["fecha_venta"])
 
         if inicial_actualizado:
             inicial = validated_data.get("inicial", instance.inicial)
@@ -255,6 +279,27 @@ class VentaSerializer(serializers.ModelSerializer):
 
         if qs.exists():
             raise serializers.ValidationError("Contrato ya está registrado")
+
+        return value
+
+    def validate_numero_contrato(self, value):
+        fecha_venta = self.initial_data.get(
+            "fecha_venta",
+            getattr(self.instance, "fecha_venta", None),
+        )
+        lote = Venta.generar_lote(fecha_venta)
+
+        if not lote:
+            return value
+
+        qs = Venta.objects.filter(lote=lote, numero_contrato=value)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            raise serializers.ValidationError(
+                f"El contrato {lote}-{value} ya esta registrado"
+            )
 
         return value
 
@@ -363,6 +408,8 @@ class VentaSerializer(serializers.ModelSerializer):
 
 
 class VentaListLiteSerializer(serializers.ModelSerializer):
+    lote = serializers.CharField(read_only=True)
+    codigo_contrato = serializers.CharField(read_only=True)
     cobrador_nombre = serializers.CharField(source="cobrador.nombre", read_only=True)
     cliente = serializers.SerializerMethodField()
     producto_nombre = serializers.SerializerMethodField()
@@ -377,7 +424,9 @@ class VentaListLiteSerializer(serializers.ModelSerializer):
         model = Venta
         fields = [
             "id",
+            "lote",
             "numero_contrato",
+            "codigo_contrato",
             "fecha_venta",
             "nombre",
             "apellido",
@@ -419,6 +468,8 @@ class VentaListLiteSerializer(serializers.ModelSerializer):
 
 
 class VentaDashboardSerializer(serializers.ModelSerializer):
+    lote = serializers.CharField(read_only=True)
+    codigo_contrato = serializers.CharField(read_only=True)
     cobrador_nombre = serializers.CharField(source="cobrador.nombre", read_only=True)
     cliente = serializers.SerializerMethodField()
 
@@ -426,7 +477,9 @@ class VentaDashboardSerializer(serializers.ModelSerializer):
         model = Venta
         fields = [
             "id",
+            "lote",
             "numero_contrato",
+            "codigo_contrato",
             "fecha_venta",
             "nombre",
             "apellido",
@@ -458,7 +511,9 @@ class VentaControlSerializer(serializers.ModelSerializer):
         model = Venta
         fields = [
             "id",
+            "lote",
             "numero_contrato",
+            "codigo_contrato",
             "fecha_venta",
             "nombre",
             "apellido",

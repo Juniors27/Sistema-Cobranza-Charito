@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react"
 import { productos } from "@/src/data/productos"
 import { useVentas } from "@/src/hooks/useVentas"
 import { SectionHeader } from "@/components/ui"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 const convertirAMayusculas = (valor) => valor.toUpperCase()
 const soloNumeros = (valor) => valor.replace(/\D/g, "")
@@ -41,6 +42,7 @@ const VentasForm = () => {
     saldo,
     requiereFechaPrimerCobro,
     precioTotal,
+    loteActual,
     agregarProducto,
     actualizarProducto,
     eliminarProducto,
@@ -136,6 +138,21 @@ const VentasForm = () => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-4">
             <div>
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Lote
+              </label>
+              <input
+                type="text"
+                value={loteActual}
+                readOnly
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-500"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                Se genera automaticamente segun el ano de la fecha de venta.
+              </p>
+            </div>
+
+            <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   {"Número de Contrato *"}
                 </label>
@@ -152,9 +169,12 @@ const VentasForm = () => {
                   })
                   limpiarErrorCampo("numeroContrato")
                 }}
-                onBlur={() => validarContrato(formVenta.numeroContrato)}
+                onBlur={() => validarContrato(formVenta.numeroContrato, formVenta.fechaVenta)}
                 className={inputClassName("numeroContrato")}
               />
+              <p className="mt-1 text-xs text-slate-500">
+                Codigo: {formatearCodigoContrato(loteActual, formVenta.numeroContrato) || "-"}
+              </p>
               {(erroresFormulario.numeroContrato || errorContrato) && (
                 <p className="mt-1 text-sm text-red-500">
                   {erroresFormulario.numeroContrato || errorContrato}
@@ -549,6 +569,7 @@ const VentasForm = () => {
                 onChange={(e) => {
                   setFormVenta({ ...formVenta, fechaVenta: e.target.value })
                   limpiarErrorCampo("fechaVenta")
+                  limpiarErrorCampo("numeroContrato")
                 }}
                 className={inputClassName("fechaVenta")}
               />

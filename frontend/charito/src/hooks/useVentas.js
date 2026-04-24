@@ -8,6 +8,7 @@ import {
   registrarVentaService,
 } from "@/src/services/ventasService";
 import { obtenerFechaActualISO } from "@/src/utils/clientesUtils";
+import { obtenerLoteDesdeFechaVenta } from "@/src/utils/contratosUtils";
 
 const repararTextoMojibake = (texto = "") => {
   if (!/[ÃÂ�]/.test(texto)) return texto;
@@ -149,7 +150,7 @@ export const useVentas = (productos = []) => {
     }));
   };
 
-  const validarContrato = async (numeroContrato) => {
+  const validarContrato = async (numeroContrato, fechaVenta = formVenta.fechaVenta) => {
     const contratoLimpio = sanitizarNumeroContrato(numeroContrato);
 
     if (!contratoLimpio) {
@@ -158,7 +159,7 @@ export const useVentas = (productos = []) => {
     }
 
     try {
-      const existe = await validarContratoService(contratoLimpio);
+      const existe = await validarContratoService(contratoLimpio, fechaVenta);
 
       if (existe) {
         setErrorContrato("Contrato ya est\u00e1 registrado");
@@ -325,6 +326,7 @@ export const useVentas = (productos = []) => {
     saldo,
     requiereFechaPrimerCobro,
     precioTotal,
+    loteActual: obtenerLoteDesdeFechaVenta(formVenta.fechaVenta),
     agregarProducto,
     actualizarProducto,
     eliminarProducto,

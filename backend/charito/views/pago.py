@@ -133,6 +133,68 @@ class HistorialPagosVentaView(APIView):
             )
 
 
+class ObtenerUltimoPagoView(APIView):
+    """
+    Obtiene el ultimo pago registrado para un contrato especifico
+    """
+
+    def get(self, request, numero_contrato):
+        try:
+            from ..models.venta import Venta
+
+            lote = request.query_params.get("lote")
+            ventas = Venta.objects.prefetch_related("items__producto").filter(
+                numero_contrato=numero_contrato
+            )
+
+            if lote:
+                ventas = ventas.filter(lote=lote)
+
+            venta = ventas.get()
+            ultimo_pago = Pago.objects.filter(venta=venta).order_by("-fecha_pago", "-fecha_registro").first()
+
+            if not ultimo_pago:
+                return Response(
+                    {"mensaje": "No se encontraron pagos para este contrato"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            serializer = PagoSerializer(ultimo_pago)
+
+            return Response(
+                {
+                    "pago": serializer.data,
+                    "venta_id": venta.id,
+                    "lote": venta.lote,
+                    "numero_contrato": venta.numero_contrato,
+                    "codigo_contrato": venta.codigo_contrato,
+                    "cliente": f"{venta.nombre} {venta.apellido}",
+                    "producto": venta.obtener_productos_resumen(),
+                    "saldo_pendiente": float(venta.saldo_pendiente),
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Venta.DoesNotExist:
+            return Response(
+                {"error": "Contrato no encontrado"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Venta.MultipleObjectsReturned:
+            return Response(
+                {"error": "Hay varios contratos con ese numero. Indica tambien el lote."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        except Exception as e:
+            import traceback
+
+            print(traceback.format_exc())
+            return Response(
+                {"error": f"Error al obtener ultimo pago: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
 class EditarPagoView(APIView):
     """
     Edita un pago existente y recalcula el saldo de la venta
@@ -280,7 +342,15 @@ class ObtenerUltimoPagoView(APIView):
         try:
             from ..models.venta import Venta
 
-            venta = Venta.objects.prefetch_related("items__producto").get(numero_contrato=numero_contrato)
+            lote = request.query_params.get("lote")
+            ventas = Venta.objects.prefetch_related("items__producto").filter(
+                numero_contrato=numero_contrato
+            )
+
+            if lote:
+                ventas = ventas.filter(lote=lote)
+
+            venta = ventas.get()
             ultimo_pago = Pago.objects.filter(venta=venta).order_by("-fecha_pago", "-fecha_registro").first()
 
             if not ultimo_pago:
@@ -295,7 +365,9 @@ class ObtenerUltimoPagoView(APIView):
                 {
                     "pago": serializer.data,
                     "venta_id": venta.id,
+                    "lote": venta.lote,
                     "numero_contrato": venta.numero_contrato,
+                    "codigo_contrato": venta.codigo_contrato,
                     "cliente": f"{venta.nombre} {venta.apellido}",
                     "producto": venta.obtener_productos_resumen(),
                     "saldo_pendiente": float(venta.saldo_pendiente),
@@ -307,6 +379,11 @@ class ObtenerUltimoPagoView(APIView):
             return Response(
                 {"error": "Contrato no encontrado"},
                 status=status.HTTP_404_NOT_FOUND,
+            )
+        except Venta.MultipleObjectsReturned:
+            return Response(
+                {"error": "Hay varios contratos con ese numero. Indica tambien el lote."},
+                status=status.HTTP_409_CONFLICT,
             )
         except Exception as e:
             import traceback

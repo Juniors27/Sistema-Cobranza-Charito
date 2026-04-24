@@ -1,4 +1,5 @@
 import { formatearFechaDMY } from "@/src/utils/clientesUtils"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 export default function ClienteRecogidoModal({
   abierto,
@@ -37,7 +38,7 @@ export default function ClienteRecogidoModal({
 
         <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
           <div className="text-sm font-semibold text-slate-900">
-            {venta.numero_contrato} - {venta.nombre} {venta.apellido}
+            {(venta.codigo_contrato || formatearCodigoContrato(venta.lote, venta.numero_contrato))} - {venta.nombre} {venta.apellido}
           </div>
           <div className="mt-1 text-sm text-slate-600">{venta.direccion}</div>
           {venta.fecha_recogido && (

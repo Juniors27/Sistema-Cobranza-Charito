@@ -2,13 +2,22 @@ import { API } from "@/src/config/api"
 
 
 export const clientesService = {
-  async listar({ page = 1, pageSize = 10, search = "", zona = "todas" } = {}) {
+  async listar({
+    page = 1,
+    pageSize = 10,
+    lote = "",
+    numeroContrato = "",
+    nombreCliente = "",
+    zona = "todas",
+  } = {}) {
     const params = new URLSearchParams({
       page: String(page),
       page_size: String(pageSize),
     })
 
-    if (search) params.append("search", search)
+    if (lote) params.append("lote", lote)
+    if (numeroContrato) params.append("numero_contrato", numeroContrato)
+    if (nombreCliente) params.append("nombre_cliente", nombreCliente)
     if (zona && zona !== "todas") params.append("zona", zona)
 
     const response = await fetch(`${API.clientes.lista}?${params.toString()}`)
@@ -81,12 +90,16 @@ export const cambiarEstadoVentaService  = async (ventaId, payload) => {
 }
 
 export const exportarClientesFiltradosService = async ({
-  search = "",
+  lote = "",
+  numeroContrato = "",
+  nombreCliente = "",
   zona = "todas",
 } = {}) => {
   const params = new URLSearchParams()
 
-  if (search) params.append("search", search)
+  if (lote) params.append("lote", lote)
+  if (numeroContrato) params.append("numero_contrato", numeroContrato)
+  if (nombreCliente) params.append("nombre_cliente", nombreCliente)
   if (zona && zona !== "todas") params.append("zona", zona)
 
   const url = params.toString()

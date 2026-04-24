@@ -1,5 +1,6 @@
 import { Edit, Trash2, Package, ArrowDownCircle, Eye } from "lucide-react"
 import { calcularEstadoAutomatico, obtenerColorEstado, obtenerFechaReferenciaPago } from "@/src/utils/clientesUtils"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 export default function ClienteRow({
     venta,
@@ -16,7 +17,7 @@ export default function ClienteRow({
     return (
         <tr className="border-b hover:bg-gray-50 text-gray-800">
             <td className="px-4 py-3 text-sm font-medium">
-                {venta.numero_contrato}
+                {venta.codigo_contrato || formatearCodigoContrato(venta.lote, venta.numero_contrato)}
             </td>
 
             <td className="px-4 py-3 text-sm">

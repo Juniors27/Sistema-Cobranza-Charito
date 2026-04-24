@@ -1,6 +1,10 @@
 "use client"
 
 import { Trash2 } from "lucide-react"
+import {
+  formatearCodigoContrato,
+  obtenerLoteDesdeFechaVenta,
+} from "@/src/utils/contratosUtils"
 
 export default function ClienteEditModal({
   ventaEditar,
@@ -21,6 +25,8 @@ export default function ClienteEditModal({
 }) {
   if (!ventaEditar) return null
 
+  const loteActual = obtenerLoteDesdeFechaVenta(ventaEditar.fecha_venta)
+
   const totalProductos = (ventaEditar.productos || []).reduce(
     (total, producto) => total + Number(producto.precio_total || 0),
     0
@@ -32,6 +38,16 @@ export default function ClienteEditModal({
         <h2 className="mb-6 text-2xl font-bold">Editar Cliente</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-semibold">Lote</label>
+            <input
+              type="text"
+              value={loteActual}
+              readOnly
+              className="w-full rounded-xl border-2 border-gray-200 bg-gray-50 p-3 text-slate-500"
+            />
+          </div>
+
           <div>
             <label className="mb-2 block text-sm font-semibold">Número de Contrato</label>
             <input
@@ -47,6 +63,9 @@ export default function ClienteEditModal({
               }}
               className="w-full rounded-xl border-2 border-gray-200 p-3"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              Codigo: {formatearCodigoContrato(loteActual, ventaEditar.numero_contrato) || "-"}
+            </p>
             {errorContratoEditar && (
               <p className="mt-1 text-sm text-red-500">{errorContratoEditar}</p>
             )}

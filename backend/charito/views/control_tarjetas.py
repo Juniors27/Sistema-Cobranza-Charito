@@ -171,7 +171,9 @@ def _serializar_venta_control(venta, hoy):
 
     return {
         "id": venta.id,
+        "lote": venta.lote,
         "numero_contrato": venta.numero_contrato,
+        "codigo_contrato": venta.codigo_contrato,
         "fecha_venta": venta.fecha_venta.isoformat() if venta.fecha_venta else None,
         "nombre": venta.nombre,
         "apellido": venta.apellido,
@@ -204,7 +206,9 @@ class ControlTarjetasListView(APIView):
 
     def get(self, request):
         filtro = request.query_params.get("filtro", "todos")
-        busqueda = request.query_params.get("search", "").strip()
+        lote = request.query_params.get("lote", "").strip()
+        numero_contrato = request.query_params.get("numero_contrato", "").strip()
+        nombre_cliente = request.query_params.get("nombre_cliente", "").strip()
 
         ultimo_pago = Pago.objects.filter(venta=OuterRef("pk")).order_by(
             "-fecha_pago",
@@ -225,14 +229,16 @@ class ControlTarjetasListView(APIView):
             .order_by("-fecha_venta", "-id")
         )
 
-        if busqueda:
+        if lote:
+            queryset = queryset.filter(lote__icontains=lote)
+
+        if numero_contrato:
+            queryset = queryset.filter(numero_contrato__icontains=numero_contrato)
+
+        if nombre_cliente:
             queryset = queryset.filter(
-                Q(numero_contrato__icontains=busqueda)
-                | Q(nombre__icontains=busqueda)
-                | Q(apellido__icontains=busqueda)
-                | Q(direccion__icontains=busqueda)
-                | Q(zona__icontains=busqueda)
-                | Q(cobrador__nombre__icontains=busqueda)
+                Q(nombre__icontains=nombre_cliente)
+                | Q(apellido__icontains=nombre_cliente)
             )
 
         hoy = date.today()

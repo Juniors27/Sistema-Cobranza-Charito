@@ -14,6 +14,7 @@ import {
 } from "@/src/services/pagosService";
 import { getVentas } from "@/src/services/ventasService";
 import { obtenerCobradores } from "@/src/services/cobradoresService";
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils";
 
 export const usePagos = () => {
   const [ventas, setVentas] = useState([]);
@@ -24,6 +25,7 @@ export const usePagos = () => {
   const [cobradorBatch, setCobradorBatch] = useState("");
   const [modoEdicion, setModoEdicion] = useState(false);
   const [pagoEditando, setPagoEditando] = useState(null);
+  const [ventaSeleccionadaId, setVentaSeleccionadaId] = useState(null);
 
   const [formPago, setFormPago] = useState({
     numeroContrato: "",
@@ -52,17 +54,37 @@ export const usePagos = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  const contratoActual = ventas.find(
-    (v) => v.numero_contrato === formPago.numeroContrato,
-  );
+  const numeroContratoLimpio = formPago.numeroContrato.trim();
+  const contratosCoincidentes = ventas
+    .filter((v) => v.numero_contrato === numeroContratoLimpio)
+    .sort((a, b) => String(b.lote || "").localeCompare(String(a.lote || "")));
+
+  const contratoActual =
+    contratosCoincidentes.find((v) => v.id === ventaSeleccionadaId) ||
+    (contratosCoincidentes.length === 1 ? contratosCoincidentes[0] : null);
 
   const esPrimerPagoContrato = contratoActual
     ? !contratoActual.primer_pago_registrado
     : false;
 
+  const requiereSeleccionContrato = contratosCoincidentes.length > 1 && !contratoActual;
+
+  const actualizarNumeroContrato = (numeroContrato) => {
+    setVentaSeleccionadaId(null);
+    setFormPago((prev) => ({
+      ...prev,
+      numeroContrato: String(numeroContrato || "").replace(/\D/g, ""),
+    }));
+  };
+
+  const seleccionarContrato = (ventaId) => {
+    setVentaSeleccionadaId(ventaId);
+  };
+
   const cancelarEdicion = () => {
     setModoEdicion(false);
     setPagoEditando(null);
+    setVentaSeleccionadaId(null);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
     setFechaPagoBatch(obtenerFechaActualISO());
     setCobradorBatch("");
@@ -74,8 +96,19 @@ export const usePagos = () => {
       return false;
     }
 
+    if (requiereSeleccionContrato) {
+      toast.warning("Selecciona el contrato correcto antes de buscar el ultimo pago");
+      return false;
+    }
+
+    if (!contratoActual) {
+      toast.error("Contrato no encontrado");
+      return false;
+    }
+
     const { res, data } = await buscarUltimoPagoService(
       formPago.numeroContrato,
+      contratoActual.lote,
     );
 
     if (!res.ok) {
@@ -89,6 +122,7 @@ export const usePagos = () => {
     setFechaPagoBatch(data.pago.fecha_pago);
     setCobradorBatch(data.pago.cobrador.toString());
     setPagoEditando(data.pago);
+    setVentaSeleccionadaId(contratoActual.id);
     setModoEdicion(true);
     return true;
   };
@@ -104,9 +138,12 @@ export const usePagos = () => {
       return false;
     }
 
-    const venta = ventas.find(
-      (v) => v.numero_contrato === formPago.numeroContrato,
-    );
+    if (requiereSeleccionContrato) {
+      toast.warning("Selecciona el contrato correcto antes de registrar el pago");
+      return false;
+    }
+
+    const venta = contratoActual;
     if (!venta) {
       toast.error("Contrato no encontrado");
       return false;
@@ -133,6 +170,7 @@ export const usePagos = () => {
     }
 
     actualizarVentaLocal(venta, data);
+    setVentaSeleccionadaId(null);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
     toast.success("Pago registrado exitosamente");
     return true;
@@ -159,9 +197,7 @@ export const usePagos = () => {
       return;
     }
 
-    const venta = ventas.find(
-      (v) => v.numero_contrato === formPago.numeroContrato,
-    );
+    const venta = contratoActual;
     actualizarVentaLocal(venta, data);
     cancelarEdicion();
     toast.success("Pago editado exitosamente");
@@ -182,9 +218,7 @@ export const usePagos = () => {
       return;
     }
 
-    const venta = ventas.find(
-      (v) => v.numero_contrato === formPago.numeroContrato,
-    );
+    const venta = contratoActual;
     actualizarVentaLocal(venta, data);
     cancelarEdicion();
     toast.success("Pago eliminado exitosamente");
@@ -196,9 +230,12 @@ export const usePagos = () => {
       return;
     }
 
-    const venta = ventas.find(
-      (v) => v.numero_contrato === formPago.numeroContrato,
-    );
+    if (requiereSeleccionContrato) {
+      toast.warning("Selecciona el contrato correcto antes de aplicar el descuento");
+      return;
+    }
+
+    const venta = contratoActual;
     if (!venta) {
       toast.error("Contrato no encontrado");
       return;
@@ -227,6 +264,7 @@ export const usePagos = () => {
     }
 
     actualizarVentaLocal(venta, data);
+    setVentaSeleccionadaId(null);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
     toast.success("Descuento aplicado correctamente");
   };
@@ -256,9 +294,14 @@ export const usePagos = () => {
     setCobradorBatch,
     formPago,
     setFormPago,
+    actualizarNumeroContrato,
     modoEdicion,
     pagoEditando,
     contratoActual,
+    contratosCoincidentes,
+    requiereSeleccionContrato,
+    seleccionarContrato,
+    formatearCodigoContrato,
     esPrimerPagoContrato,
     buscarUltimoPago,
     registrarPago,

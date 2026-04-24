@@ -18,7 +18,9 @@ class ClientesQuerysetMixin:
             venta=OuterRef("pk")
         ).order_by("-fecha_pago", "-fecha_registro")
 
-        search = self.request.query_params.get("search", "").strip()
+        lote = self.request.query_params.get("lote", "").strip()
+        numero_contrato = self.request.query_params.get("numero_contrato", "").strip()
+        nombre_cliente = self.request.query_params.get("nombre_cliente", "").strip()
         zona = self.request.query_params.get("zona", "").strip().lower()
 
         queryset = (
@@ -33,14 +35,17 @@ class ClientesQuerysetMixin:
         if zona and zona != "todas":
             queryset = queryset.filter(zona=zona)
 
-        if search:
+        if lote:
+            queryset = queryset.filter(lote__icontains=lote)
+
+        if numero_contrato:
+            queryset = queryset.filter(numero_contrato__icontains=numero_contrato)
+
+        if nombre_cliente:
             queryset = queryset.filter(
-                Q(numero_contrato__icontains=search)
-                | Q(nombre__icontains=search)
-                | Q(apellido__icontains=search)
-                | Q(direccion__icontains=search)
-                | Q(items__producto__nombre__icontains=search)
-            ).distinct()
+                Q(nombre__icontains=nombre_cliente)
+                | Q(apellido__icontains=nombre_cliente)
+            )
 
         return queryset
 

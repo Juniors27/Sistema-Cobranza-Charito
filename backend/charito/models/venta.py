@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+from django.utils.dateparse import parse_date
 from decimal import Decimal
 from .cobrador import Cobrador
 from .producto import Producto
@@ -30,7 +31,8 @@ class Venta(models.Model):
     ]
 
     # Contrato
-    numero_contrato = models.CharField(max_length=50, unique=True)
+    lote = models.CharField(max_length=2, blank=True, editable=False, db_index=True)
+    numero_contrato = models.CharField(max_length=50)
     fecha_venta = models.DateField()
 
     # Cliente
@@ -118,8 +120,31 @@ class Venta(models.Model):
 
     class Meta:
         ordering = ['-fecha_venta', '-fecha_registro']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['lote', 'numero_contrato'],
+                name='unique_lote_numero_contrato',
+            )
+        ]
+
+    @staticmethod
+    def generar_lote(fecha_venta):
+        if not fecha_venta:
+            return ""
+        if isinstance(fecha_venta, str):
+            fecha_venta = parse_date(fecha_venta)
+            if not fecha_venta:
+                return ""
+        return f"{fecha_venta.year % 100:02d}"
+
+    @property
+    def codigo_contrato(self):
+        if self.lote and self.numero_contrato:
+            return f"{self.lote}-{self.numero_contrato}"
+        return self.numero_contrato
 
     def save(self, *args, **kwargs):
+        self.lote = self.generar_lote(self.fecha_venta)
         if not self.pk:
             self.saldo_pendiente = self.monto - self.inicial
             if self.inicial > 0:
@@ -128,7 +153,7 @@ class Venta(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.numero_contrato} - {self.nombre} {self.apellido}"
+        return f"{self.codigo_contrato} - {self.nombre} {self.apellido}"
 
     def obtener_items_producto(self):
         items = list(self.items.select_related("producto").all())
@@ -191,4 +216,4 @@ class VentaItem(models.Model):
         ordering = ["id"]
 
     def __str__(self):
-        return f"{self.venta.numero_contrato} - {self.producto.nombre}"
+        return f"{self.venta.codigo_contrato} - {self.producto.nombre}"

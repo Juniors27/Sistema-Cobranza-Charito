@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { FilePenLine, MessageSquareMore, Trash2, X } from "lucide-react"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 const TIPOS_CON_COMPROMISO = new Set(["promesa_pago", "reprogramado"])
 
@@ -43,7 +44,7 @@ export default function ObservacionesControlModal({
               <h3 className="text-2xl font-semibold">Observaciones de control</h3>
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Contrato {venta.numero_contrato} - {venta.nombre} {venta.apellido}
+              Contrato {venta.codigo_contrato || formatearCodigoContrato(venta.lote, venta.numero_contrato)} - {venta.nombre} {venta.apellido}
             </p>
           </div>
           <button

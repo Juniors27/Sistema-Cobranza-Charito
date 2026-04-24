@@ -3,6 +3,7 @@ from ..models.venta import Venta
 
 
 class ClienteSerializer(serializers.ModelSerializer):
+    codigo_contrato = serializers.CharField(read_only=True)
     producto = serializers.SerializerMethodField()
     productos = serializers.SerializerMethodField()
     cobrador_nombre = serializers.CharField(source="cobrador.nombre", read_only=True)
@@ -11,7 +12,9 @@ class ClienteSerializer(serializers.ModelSerializer):
         model = Venta
         fields = [
             "id",
+            "lote",
             "numero_contrato",
+            "codigo_contrato",
             "fecha_venta",
             "nombre",
             "apellido",
@@ -52,6 +55,7 @@ class ClienteSerializer(serializers.ModelSerializer):
 
 
 class ClienteListSerializer(serializers.ModelSerializer):
+    codigo_contrato = serializers.CharField(read_only=True)
     producto_nombre = serializers.SerializerMethodField()
     cobrador_nombre = serializers.CharField(source="cobrador.nombre", read_only=True)
     ultimo_pago_fecha = serializers.DateField(read_only=True, allow_null=True)
@@ -61,7 +65,9 @@ class ClienteListSerializer(serializers.ModelSerializer):
         model = Venta
         fields = [
             "id",
+            "lote",
             "numero_contrato",
+            "codigo_contrato",
             "fecha_venta",
             "nombre",
             "apellido",

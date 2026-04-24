@@ -13,13 +13,22 @@ import {
   exportarExcel as exportarExcelUtil,
   obtenerFechaActualISO,
 } from "@/src/utils/clientesUtils";
+import { obtenerLoteDesdeFechaVenta } from "@/src/utils/contratosUtils";
 
 export const useClientes = () => {
   const sanitizarNumeroContrato = (valor = "") => valor.replace(/\D/g, "");
   const [ventas, setVentas] = useState([]);
   const [cobradores, setCobradores] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchDebounced, setSearchDebounced] = useState("");
+  const [filtrosBusqueda, setFiltrosBusqueda] = useState({
+    lote: "",
+    numeroContrato: "",
+    nombreCliente: "",
+  });
+  const [filtrosDebounced, setFiltrosDebounced] = useState({
+    lote: "",
+    numeroContrato: "",
+    nombreCliente: "",
+  });
   const [zonaFiltro, setZonaFiltro] = useState("todas");
   const [modalEditar, setModalEditar] = useState(false);
   const [ventaEditar, setVentaEditar] = useState(null);
@@ -49,12 +58,16 @@ export const useClientes = () => {
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setSearchDebounced(searchTerm.trim());
+      setFiltrosDebounced({
+        lote: filtrosBusqueda.lote.trim(),
+        numeroContrato: sanitizarNumeroContrato(filtrosBusqueda.numeroContrato),
+        nombreCliente: filtrosBusqueda.nombreCliente.trim(),
+      });
       setPaginaActual(1);
     }, 350);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [filtrosBusqueda]);
 
   useEffect(() => {
     setPaginaActual(1);
@@ -69,7 +82,9 @@ export const useClientes = () => {
         clientesService.listar({
           page: paginaActual,
           pageSize: registrosPorPagina,
-          search: searchDebounced,
+          lote: filtrosDebounced.lote,
+          numeroContrato: filtrosDebounced.numeroContrato,
+          nombreCliente: filtrosDebounced.nombreCliente,
           zona: zonaFiltro,
         }),
         obtenerCobradores(),
@@ -85,7 +100,7 @@ export const useClientes = () => {
     } finally {
       setLoading(false);
     }
-  }, [paginaActual, registrosPorPagina, searchDebounced, zonaFiltro]);
+  }, [paginaActual, registrosPorPagina, filtrosDebounced, zonaFiltro]);
 
   useEffect(() => {
     cargarDatos();
@@ -210,6 +225,7 @@ export const useClientes = () => {
 
       setVentaEditar({
         ...ventaDetallada,
+        lote: ventaDetallada.lote || obtenerLoteDesdeFechaVenta(ventaDetallada.fecha_venta),
         numero_contrato: sanitizarNumeroContrato(String(ventaDetallada.numero_contrato ?? "")),
         numero_contrato_original: sanitizarNumeroContrato(
           String(ventaDetallada.numero_contrato ?? "")
@@ -315,7 +331,7 @@ export const useClientes = () => {
       }
 
       if (numeroContrato !== numeroContratoOriginal) {
-        const existe = await validarContratoService(numeroContrato);
+        const existe = await validarContratoService(numeroContrato, ventaEditar?.fecha_venta);
         if (existe) {
           setErrorContratoEditar("Contrato ya está registrado");
           return toast.error("El numero de contrato ya existe");
@@ -357,6 +373,7 @@ export const useClientes = () => {
 
       const ventaActualizada = {
         ...ventaSinContratoOriginal,
+        lote: obtenerLoteDesdeFechaVenta(ventaEditar.fecha_venta),
         numero_contrato: numeroContrato,
         monto_frecuencia:
           ventaEditar.monto_frecuencia === "" || ventaEditar.monto_frecuencia === null
@@ -419,7 +436,9 @@ export const useClientes = () => {
   const exportarExcel = async () => {
     try {
       const data = await exportarClientesFiltradosService({
-        search: searchDebounced,
+        lote: filtrosDebounced.lote,
+        numeroContrato: filtrosDebounced.numeroContrato,
+        nombreCliente: filtrosDebounced.nombreCliente,
         zona: zonaFiltro,
       });
       exportarExcelUtil(data);
@@ -452,7 +471,7 @@ export const useClientes = () => {
     ventasFiltradas: ventas,
     exportarExcel,
     cobradores,
-    searchTerm,
+    filtrosBusqueda,
     zonaFiltro,
     modalEditar,
     ventaEditar,
@@ -479,7 +498,7 @@ export const useClientes = () => {
     ventaRecogido,
     guardandoRecogido,
     formRecogido,
-    setSearchTerm,
+    setFiltrosBusqueda,
     setZonaFiltro,
     setModalEditar,
     setVentaEditar,

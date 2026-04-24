@@ -14,7 +14,7 @@ export default function HistorialPage() {
     conteos,
     loading,
     error,
-    searchTerm,
+    filtrosBusqueda,
     filtro,
     modalObservacionesAbierto,
     ventaObservaciones,
@@ -30,7 +30,7 @@ export default function HistorialPage() {
     iniciarEdicionObservacion,
     cancelarEdicionObservacion,
     borrarObservacion,
-    setSearchTerm,
+    setFiltrosBusqueda,
     setFiltro,
     setFormObservacion,
     controlTarjetasExcel,
@@ -56,8 +56,8 @@ export default function HistorialPage() {
         />
 
         <HistorialFiltros
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+          filtrosBusqueda={filtrosBusqueda}
+          setFiltrosBusqueda={setFiltrosBusqueda}
           filtro={filtro}
           setFiltro={setFiltro}
           clientesControlar={clientesControlar}

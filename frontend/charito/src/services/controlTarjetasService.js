@@ -3,7 +3,9 @@ import { API } from "@/src/config/api"
 export const getControlTarjetas = async ({
   page = 1,
   pageSize = 10,
-  search = "",
+  lote = "",
+  numeroContrato = "",
+  nombreCliente = "",
   filtro = "todos",
 } = {}) => {
   const params = new URLSearchParams({
@@ -12,9 +14,9 @@ export const getControlTarjetas = async ({
     filtro,
   })
 
-  if (search) {
-    params.append("search", search)
-  }
+  if (lote) params.append("lote", lote)
+  if (numeroContrato) params.append("numero_contrato", numeroContrato)
+  if (nombreCliente) params.append("nombre_cliente", nombreCliente)
 
   const res = await fetch(`${API.ventas.controlTarjetas}?${params.toString()}`)
 

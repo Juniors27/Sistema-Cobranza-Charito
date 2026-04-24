@@ -1,4 +1,5 @@
 import { MapPin, MessageSquareMore } from "lucide-react"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 import { PaginacionControles, LoadingScreen, ErrorScreen, EmptyState } from "@/components/ui"
 
@@ -72,7 +73,9 @@ export default function HistorialTabla({
                         : ""
                   }`}
                 >
-                  <td className="px-4 py-3 font-medium">{ventas.numero_contrato}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {ventas.codigo_contrato || formatearCodigoContrato(ventas.lote, ventas.numero_contrato)}
+                  </td>
                   <td className="px-4 py-3">
                     {ventas.nombre} {ventas.apellido}
                   </td>

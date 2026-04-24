@@ -68,8 +68,16 @@ export const getVentaDetalle = async (ventaId) => {
 /* =========================
    VALIDAR CONTRATO
 ========================= */
-export const validarContratoService = async (numeroContrato) => {
-  const res = await fetch(`${API.ventas.root}validar/${numeroContrato}/`)
+export const validarContratoService = async (numeroContrato, fechaVenta = "") => {
+  const params = new URLSearchParams()
+
+  if (fechaVenta) params.append("fecha_venta", fechaVenta)
+
+  const url = params.toString()
+    ? `${API.ventas.root}validar/${numeroContrato}/?${params.toString()}`
+    : `${API.ventas.root}validar/${numeroContrato}/`
+
+  const res = await fetch(url)
 
   if (!res.ok && res.status !== 409) {
     // Solo lanzamos error si NO es 409

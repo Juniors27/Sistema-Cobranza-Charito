@@ -14,10 +14,14 @@ export default function PagosForm(props) {
     cobradorBatch,
     setCobradorBatch,
     formPago,
-    setFormPago,
+    actualizarNumeroContrato,
     modoEdicion,
     pagoEditando,
     contratoActual,
+    contratosCoincidentes,
+    requiereSeleccionContrato,
+    seleccionarContrato,
+    formatearCodigoContrato,
     esPrimerPagoContrato,
     buscarUltimoPago,
     registrarPago,
@@ -142,12 +146,7 @@ export default function PagosForm(props) {
                     ref={contratoInputRef}
                     type="text"
                     value={formPago.numeroContrato}
-                    onChange={(e) =>
-                      setFormPago({
-                        ...formPago,
-                        numeroContrato: e.target.value,
-                      })
-                    }
+                    onChange={(e) => actualizarNumeroContrato(e.target.value)}
                     onKeyDown={handleContratoKeyDown}
                     disabled={modoEdicion}
                     className="flex-1 p-3 border border-slate-300 rounded-xl focus:border-sky-600 focus:outline-none disabled:bg-slate-100 text-slate-800 bg-white"
@@ -165,9 +164,38 @@ export default function PagosForm(props) {
                 </div>
               </div>
 
+              {requiereSeleccionContrato && !modoEdicion && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                  <p className="text-sm font-semibold text-amber-800">
+                    Hay varios contratos con ese numero. Elige el correcto:
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {contratosCoincidentes.map((venta) => (
+                      <button
+                        key={venta.id}
+                        type="button"
+                        onClick={() => seleccionarContrato(venta.id)}
+                        className="w-full rounded-xl border border-amber-200 bg-white px-4 py-3 text-left hover:border-amber-400 hover:bg-amber-50"
+                      >
+                        <div className="font-semibold text-slate-900">
+                          {formatearCodigoContrato(venta.lote, venta.numero_contrato)}
+                        </div>
+                        <div className="text-sm text-slate-600">
+                          {venta.nombre} {venta.apellido}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {venta.direccion} | Saldo: S/ {Number(venta.saldo_pendiente || 0).toFixed(2)}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {contratoActual && (
                 <div className="bg-white p-4 rounded-2xl border border-slate-200">
                   <div className="font-semibold text-slate-900">
+                    {formatearCodigoContrato(contratoActual.lote, contratoActual.numero_contrato)} -{" "}
                     {contratoActual.nombre} {contratoActual.apellido}
                   </div>
                   <div className="text-sm text-slate-500">

@@ -308,3 +308,30 @@ class ProgramacionPrimerCobroView(APIView):
 
         serializer = VentaSerializer(venta)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ValidarContratoView(APIView):
+    def get(self, request, numero_contrato):
+        lote = request.query_params.get("lote")
+        fecha_venta = parse_date(request.query_params.get("fecha_venta", ""))
+
+        if not lote and fecha_venta:
+            lote = Venta.generar_lote(fecha_venta)
+
+        filtros = {"numero_contrato": numero_contrato}
+        if lote:
+            filtros["lote"] = lote
+
+        existe = Venta.objects.filter(**filtros).exists()
+        contrato = f"{lote}-{numero_contrato}" if lote else numero_contrato
+
+        if existe:
+            return Response(
+                {"detail": f"Contrato {contrato} ya esta registrado", "lote": lote},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return Response(
+            {"detail": f"Contrato {contrato} disponible", "lote": lote},
+            status=status.HTTP_200_OK,
+        )

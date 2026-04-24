@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils";
 
 const MILISEGUNDOS_POR_DIA = 1000 * 60 * 60 * 24;
 
@@ -284,7 +285,7 @@ export const filtrarVentasHistorial = (
 
 export const controlTarjetasExcel = (ventasFiltradas) => {
   const data = ventasFiltradas.map((v) => ({
-    Contrato: v.numero_contrato,
+    Contrato: v.codigo_contrato || formatearCodigoContrato(v.lote, v.numero_contrato),
     Cliente: `${v.nombre} ${v.apellido}`,
     Direccion: v.direccion,
     Zona: v.zona,

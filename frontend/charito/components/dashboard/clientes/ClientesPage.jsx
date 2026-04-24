@@ -11,9 +11,9 @@ import ClienteRecogidoModal from "./ClienteRecogidoModal";
 export default function ClientesPage() {
   const {
     ventasFiltradas,
-    searchTerm,
+    filtrosBusqueda,
     exportarExcel,
-    setSearchTerm,
+    setFiltrosBusqueda,
     zonaFiltro,
     loading,
     error,
@@ -54,8 +54,8 @@ export default function ClientesPage() {
       />
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <ClientesFiltros
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
+          filtrosBusqueda={filtrosBusqueda}
+          setFiltrosBusqueda={setFiltrosBusqueda}
           zonaFiltro={zonaFiltro}
           setZonaFiltro={setZonaFiltro}
           exportarExcel={exportarExcel} // pendiente de implementar
