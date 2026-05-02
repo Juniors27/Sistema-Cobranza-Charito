@@ -14,6 +14,7 @@ export default function PagosForm(props) {
     cobradorBatch,
     setCobradorBatch,
     formPago,
+    setFormPago,
     actualizarNumeroContrato,
     modoEdicion,
     pagoEditando,

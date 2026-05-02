@@ -2,6 +2,10 @@
 
 import { Eye, Search, X } from "lucide-react"
 import { calcularTotalMonto } from "@/src/utils/reporteUtils"
+import {
+  formatearCodigoContrato,
+  obtenerLoteDesdeFechaVenta,
+} from "@/src/utils/contratosUtils"
 
 export default function TablaResultados({
   data,
@@ -9,6 +13,12 @@ export default function TablaResultados({
   setSearchTerm,
   abrirModal,
 }) {
+  const obtenerCodigoContrato = (pago) =>
+    formatearCodigoContrato(
+      pago.lote || obtenerLoteDesdeFechaVenta(pago.fecha_venta),
+      pago.numeroContrato,
+    )
+
   const totalCancelados = data.filter(
     (pago) => pago.estado === "cancelado" || Number(pago.saldo_pendiente) === 0
   ).length
@@ -70,7 +80,7 @@ export default function TablaResultados({
                     }`}
                   >
                     <td className="py-4 px-4 font-semibold text-left">
-                      {pago.numeroContrato}
+                      {obtenerCodigoContrato(pago)}
                     </td>
                     <td className="text-center">{pago.cliente}</td>
                     <td className="text-center">

@@ -21,7 +21,7 @@ export default function ClientesFiltros({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div>
           <label className="mb-2 block text-sm font-semibold text-slate-700">
-            Ano venta / lote
+            Año venta / lote
           </label>
           <input
             type="text"
@@ -36,7 +36,7 @@ export default function ClientesFiltros({
 
         <div>
           <label className="mb-2 block text-sm font-semibold text-slate-700">
-            Numero contrato
+            Número contrato
           </label>
           <input
             type="text"

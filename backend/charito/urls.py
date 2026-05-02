@@ -5,6 +5,7 @@ from charito.views.venta import VentaViewSet, VentaListView, ValidarContratoView
 from charito.views.cliente import ExportarClientesView, ListaClientesView
 from charito.views.contratos_salida import ContratosSalidaListView
 from charito.views.control_tarjetas import ControlTarjetasListView
+from charito.views.dashboard import DashboardResumenView
 from charito.views.pago import RegistrarPagoView, ListarPagosView, ReporteCobranzaView, HistorialPagosVentaView, EditarPagoView, EliminarPagoView, ObtenerUltimoPagoView
 from charito.views.observacion_control import (
     ObservacionControlDetalleView,
@@ -27,6 +28,7 @@ urlpatterns = [
     path("api/exportar/clientes/", ExportarClientesView.as_view(), name="exportar-clientes"),
     path("api/lista/contratos-salida/", ContratosSalidaListView.as_view(), name="lista-contratos-salida"),
     path("api/lista/control-tarjetas/", ControlTarjetasListView.as_view(), name="lista-control-tarjetas"),
+    path("api/dashboard/resumen/", DashboardResumenView.as_view(), name="dashboard-resumen"),
     path('api/pagos/registrar/', RegistrarPagoView.as_view(), name='registrar-pago'),
     path('api/pagos/', ListarPagosView.as_view(), name='listar-pagos'), 
     path("api/reporte/cobranza/", ReporteCobranzaView.as_view(),name="reporte-cobranza"),

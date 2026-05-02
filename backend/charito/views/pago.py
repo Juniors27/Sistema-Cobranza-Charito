@@ -3,7 +3,14 @@ from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils.dateparse import parse_date
-from charito.serializers.pago import PagoSerializer, PagoReporteSerializer, HistorialPagosSerializer
+from django.db.models import F, Window
+from django.db.models.functions import RowNumber
+from charito.serializers.pago import (
+    HistorialPagosSerializer,
+    PagoDashboardSerializer,
+    PagoReporteSerializer,
+    PagoSerializer,
+)
 from ..models.pago import Pago
 
 
@@ -39,6 +46,30 @@ class ListarPagosView(APIView):
     """
 
     def get(self, request):
+        if request.query_params.get("modulo") == "dashboard":
+            pagos = (
+                Pago.objects.only(
+                    "id",
+                    "venta_id",
+                    "fecha_pago",
+                    "monto",
+                    "es_primer_pago",
+                    "es_descuento",
+                    "fecha_registro",
+                )
+                .annotate(
+                    fila=Window(
+                        expression=RowNumber(),
+                        partition_by=[F("venta_id")],
+                        order_by=[F("fecha_pago").desc(), F("fecha_registro").desc()],
+                    )
+                )
+                .filter(fila=1)
+                .order_by("-fecha_pago", "-fecha_registro")
+            )
+            serializer = PagoDashboardSerializer(pagos, many=True)
+            return Response(serializer.data)
+
         pagos = Pago.objects.all().select_related("venta", "cobrador")
         serializer = PagoSerializer(pagos, many=True)
         return Response(serializer.data)

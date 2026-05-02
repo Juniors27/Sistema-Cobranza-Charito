@@ -1,5 +1,6 @@
 // src/config/utils/dashboardUtils.js
 import * as XLSX from "xlsx"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 const FECHAS_INICIO_PROGRAMACION = ["2026-03-12", "2026-03-13"]
 const MILISEGUNDOS_POR_DIA = 1000 * 60 * 60 * 24
@@ -130,11 +131,7 @@ const obtenerSemanaLaboral = (referencia = new Date()) => {
   const inicioSemana = new Date(base)
   const diaSemana = base.getDay()
 
-  if (diaSemana === 6) {
-    inicioSemana.setDate(base.getDate() + 1)
-  } else {
-    inicioSemana.setDate(base.getDate() - diaSemana)
-  }
+  inicioSemana.setDate(base.getDate() - diaSemana)
 
   const finSemanaLaboral = new Date(inicioSemana)
   finSemanaLaboral.setDate(inicioSemana.getDate() + 3)
@@ -250,20 +247,37 @@ export const calcularMetricasDashboard = (
   fechaFin
 ) => {
   const estadosInactivos = ["cancelada", "recogido", "bajada"]
-
-  const ventasActivas = ventas.filter(
-    (venta) =>
-      !estadosInactivos.includes(venta.estado?.toLowerCase()) &&
-      parseFloat(venta.saldo_pendiente) > 0
-  )
-
-  const clientesPorZona = {
-    milagro: ventasActivas.filter((venta) => venta.zona === "milagro").length,
-    huanchaco: ventasActivas.filter((venta) => venta.zona === "huanchaco").length,
-    buenosAires: ventasActivas.filter((venta) => venta.zona === "buenos aires").length,
-  }
-
   const ultimoPagoPorVenta = obtenerUltimoPagoPorVenta(pagos)
+  const ventasActivas = []
+  const clientesPorZona = {
+    milagro: 0,
+    huanchaco: 0,
+    buenosAires: 0,
+  }
+  const activasPorCobrador = new Map()
+  const bajadasPorCobrador = new Map()
+
+  ventas.forEach((venta) => {
+    const estado = venta.estado?.toLowerCase()
+    const cobradorId = venta.cobrador
+    const saldoPendiente = Number(venta.saldo_pendiente || 0)
+
+    if (estado === "bajada" && cobradorId != null) {
+      bajadasPorCobrador.set(cobradorId, (bajadasPorCobrador.get(cobradorId) || 0) + 1)
+    }
+
+    if (estadosInactivos.includes(estado) || saldoPendiente <= 0) return
+
+    ventasActivas.push(venta)
+
+    if (venta.zona === "milagro") clientesPorZona.milagro += 1
+    if (venta.zona === "huanchaco") clientesPorZona.huanchaco += 1
+    if (venta.zona === "buenos aires") clientesPorZona.buenosAires += 1
+
+    if (cobradorId != null) {
+      activasPorCobrador.set(cobradorId, (activasPorCobrador.get(cobradorId) || 0) + 1)
+    }
+  })
 
   const ventasCanceladasEnPeriodo = ventas.filter((venta) => {
     if (venta.estado?.toLowerCase() !== "cancelado") return false
@@ -276,6 +290,15 @@ export const calcularMetricasDashboard = (
       periodo,
       fechaInicio,
       fechaFin
+    )
+  })
+
+  const canceladasPorCobradorMap = new Map()
+  ventasCanceladasEnPeriodo.forEach((venta) => {
+    if (venta.cobrador == null) return
+    canceladasPorCobradorMap.set(
+      venta.cobrador,
+      (canceladasPorCobradorMap.get(venta.cobrador) || 0) + 1
     )
   })
 
@@ -313,17 +336,9 @@ export const calcularMetricasDashboard = (
 
   const clientesPorCobrador = cobradores.map((cobrador) => ({
     nombre: cobrador.nombre,
-    cantidad: ventasActivas.filter(
-      (venta) => venta.cobrador === cobrador.id
-    ).length,
-    canceladas: ventasCanceladasEnPeriodo.filter(
-      (venta) => venta.cobrador === cobrador.id
-    ).length,
-    bajadas: ventas.filter(
-      (venta) =>
-        venta.cobrador === cobrador.id &&
-        venta.estado?.toLowerCase() === "bajada"
-    ).length,
+    cantidad: activasPorCobrador.get(cobrador.id) || 0,
+    canceladas: canceladasPorCobradorMap.get(cobrador.id) || 0,
+    bajadas: bajadasPorCobrador.get(cobrador.id) || 0,
     zona: cobrador.zona,
   }))
 
@@ -331,9 +346,7 @@ export const calcularMetricasDashboard = (
     id: cobrador.id,
     nombre: cobrador.nombre,
     zona: cobrador.zona,
-    cantidad: ventasCanceladasEnPeriodo.filter(
-      (venta) => venta.cobrador === cobrador.id
-    ).length,
+    cantidad: canceladasPorCobradorMap.get(cobrador.id) || 0,
   }))
 
   const primerosCobrosPorCobrador = cobradores.map((cobrador) => {
@@ -384,6 +397,9 @@ export const calcularMetricasDashboard = (
 
       return {
         id: venta.id,
+        codigo_contrato:
+          venta.codigo_contrato || formatearCodigoContrato(venta.lote, venta.numero_contrato),
+        lote: venta.lote,
         numero_contrato: venta.numero_contrato,
         cliente: venta.cliente || `${venta.nombre} ${venta.apellido}`,
         direccion: venta.direccion,
@@ -442,7 +458,8 @@ export const exportarClientesCriticosExcel = (clientesCriticos) => {
 
   const data = clientesCriticos.map((cliente, index) => ({
     Prioridad: index + 1,
-    Contrato: cliente.numero_contrato,
+    Contrato:
+      cliente.codigo_contrato || formatearCodigoContrato(cliente.lote, cliente.numero_contrato),
     Cliente: cliente.cliente,
     Cobrador: cliente.cobrador_nombre || "Sin asignar",
     Zona: cliente.zona,

@@ -3,6 +3,10 @@
 import { Printer, X } from "lucide-react"
 import { calcularTotalPagado } from "@/src/utils/reporteUtils"
 import { formatearFechaDMY } from "@/src/utils/clientesUtils"
+import {
+  formatearCodigoContrato,
+  obtenerLoteDesdeFechaVenta,
+} from "@/src/utils/contratosUtils"
 
 export default function ModalDetalle({
   pagoSeleccionado,
@@ -11,6 +15,11 @@ export default function ModalDetalle({
   cerrarModal,
   printRef,
 }) {
+  const codigoContrato = formatearCodigoContrato(
+    pagoSeleccionado.lote || obtenerLoteDesdeFechaVenta(pagoSeleccionado.fecha_venta),
+    pagoSeleccionado.numeroContrato,
+  )
+
   const imprimirTarjeta = () => {
     window.print()
   }
@@ -29,7 +38,7 @@ export default function ModalDetalle({
               </p>
               <h2 className="mt-2 text-lg font-medium text-slate-200">Detalle del contrato</h2>
               <p className="mt-3 text-3xl font-semibold tracking-[0.08em] text-white md:text-4xl">
-                {pagoSeleccionado.numeroContrato}
+                {codigoContrato}
               </p>
             </div>
 

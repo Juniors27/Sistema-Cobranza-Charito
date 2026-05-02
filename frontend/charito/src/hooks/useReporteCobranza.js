@@ -5,8 +5,17 @@ import { toast } from "sonner"
 
 import { getReporteCobranza, getHistorialPagos } from "@/src/services/reporteService"
 import { obtenerCobradores } from "@/src/services/cobradoresService"
+import {
+  formatearCodigoContrato,
+  obtenerLoteDesdeFechaVenta,
+} from "@/src/utils/contratosUtils"
 
 export const useReporteCobranza = () => {
+  const obtenerCodigoContrato = (pago) =>
+    formatearCodigoContrato(
+      pago.lote || obtenerLoteDesdeFechaVenta(pago.fecha_venta),
+      pago.numeroContrato,
+    ).toLowerCase()
 
   const [tipoFecha, setTipoFecha] = useState("simple")
   const [cobradores, setCobradores] = useState([])
@@ -76,14 +85,11 @@ export const useReporteCobranza = () => {
         ...filtros,
       })
 
-     // console.log("RESPUESTA BACKEND:", data)
-
       setPagosReporteFiltrados(data)
       setFiltrosAplicados(true)
 
       toast.success("Filtros aplicados correctamente")
     } catch (error) {
-      console.log("ERROR REAL:", error) 
       toast.error("Error aplicando filtros")
       setPagosReporteFiltrados([])
       setFiltrosAplicados(false)
@@ -110,6 +116,7 @@ export const useReporteCobranza = () => {
       if (!search) return true
 
       return (
+        obtenerCodigoContrato(pago).includes(search) ||
         pago.numeroContrato?.toLowerCase().includes(search) ||
         pago.cliente?.toLowerCase().includes(search)
       )
@@ -131,7 +138,6 @@ export const useReporteCobranza = () => {
     setCargandoHistorial(true)
     try {
       const data = await getHistorialPagos(ventaId)
-      console.log("RESPUESTA BACKEND:", data)
       setHistorialPagos(data)
     } catch (error) {
       toast.error("Error cargando historial")

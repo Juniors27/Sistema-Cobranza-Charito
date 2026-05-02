@@ -67,6 +67,20 @@ export const obtenerMesActual = () => {
   return `${year}-${month}`
 }
 
+export const obtenerMesesRecientes = (cantidad = 18, referencia = new Date()) => {
+  return Array.from({ length: cantidad }, (_, index) => {
+    const fecha = new Date(referencia.getFullYear(), referencia.getMonth() - index, 1)
+    const year = fecha.getFullYear()
+    const month = String(fecha.getMonth() + 1).padStart(2, "0")
+    const label = MONTH_FORMATTER.format(fecha)
+
+    return {
+      value: `${year}-${month}`,
+      label: `${label.charAt(0).toUpperCase()}${label.slice(1)}`,
+    }
+  })
+}
+
 export const obtenerFechaActual = () => {
   const hoy = new Date()
   const year = hoy.getFullYear()

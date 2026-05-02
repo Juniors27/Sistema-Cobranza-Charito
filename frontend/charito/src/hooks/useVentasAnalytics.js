@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { getVentas, getVentasFiltradas } from "@/src/services/ventasService"
+import { obtenerCobradores } from "@/src/services/cobradoresService"
+import { getVentasFiltradas } from "@/src/services/ventasService"
 import {
   agruparVentasPorFecha,
   construirDescripcionPeriodo,
   obtenerFechaActual,
   obtenerMesActual,
-  obtenerMesesDisponibles,
+  obtenerMesesRecientes,
   resumirVentas,
 } from "@/src/utils/ventasAnalyticsUtils"
 
@@ -26,19 +27,21 @@ const consultarVentasFiltradas = async ({
   currentFechaFin,
 }) => {
   if (currentFilterType === FILTER_TYPES.mes) {
-    return getVentasFiltradas({ mes: currentMes })
+    return getVentasFiltradas({ mes: currentMes, modulo: "dashboard" })
   }
 
   if (currentFilterType === FILTER_TYPES.fecha) {
     return getVentasFiltradas({
       fechaInicio: currentFecha,
       fechaFin: currentFecha,
+      modulo: "dashboard",
     })
   }
 
   return getVentasFiltradas({
     fechaInicio: currentFechaInicio,
     fechaFin: currentFechaFin,
+    modulo: "dashboard",
   })
 }
 
@@ -107,7 +110,6 @@ export const useVentasAnalytics = () => {
     setError("")
 
     try {
-      // La API ya soporta filtros por mes y rango; para fecha puntual usamos rango de un solo día.
       const data = await consultarVentasFiltradas({
         currentFilterType,
         currentMes,
@@ -125,7 +127,7 @@ export const useVentasAnalytics = () => {
       }
 
       return true
-    } catch (filtroError) {
+    } catch {
       const mensaje = "No se pudo cargar el reporte de ventas"
       setError(mensaje)
       toast.error(mensaje)
@@ -140,23 +142,16 @@ export const useVentasAnalytics = () => {
       setLoading(true)
       setError("")
 
-    try {
-        // Para poblar meses y cobradores no necesitamos el listado pesado con subconsultas.
-        const ventas = await getVentas({ modulo: "dashboard" })
-        const meses = obtenerMesesDisponibles(ventas)
-        const cobradores = Array.from(
-          new Map(
-            ventas
-              .filter((venta) => venta.cobrador || venta.cobrador_nombre)
-              .map((venta) => [
-                String(venta.cobrador ?? venta.cobrador_nombre),
-                {
-                  value: String(venta.cobrador ?? venta.cobrador_nombre),
-                  label: venta.cobrador_nombre || `Cobrador ${venta.cobrador}`,
-                },
-              ])
-          ).values()
-        ).sort((a, b) => a.label.localeCompare(b.label, "es"))
+      try {
+        const meses = obtenerMesesRecientes()
+        const cobradoresData = await obtenerCobradores()
+        const cobradores = cobradoresData
+          .map((cobrador) => ({
+            value: String(cobrador.id),
+            label: cobrador.nombre || `Cobrador ${cobrador.id}`,
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label, "es"))
+
         const mesActual = obtenerMesActual()
         const mesInicial =
           meses.find((item) => item.value === mesActual)?.value || meses[0]?.value || ""
@@ -164,11 +159,10 @@ export const useVentasAnalytics = () => {
         setMesesDisponibles(meses)
         setCobradoresDisponibles(cobradores)
         setMesSeleccionado(mesInicial)
-
         setVentasPeriodo([])
         setFiltroAplicado(false)
-      } catch (cargaError) {
-        setError("No se pudo cargar el módulo de reporte de ventas")
+      } catch {
+        setError("No se pudo cargar el modulo de reporte de ventas")
       } finally {
         setLoading(false)
       }
@@ -190,7 +184,6 @@ export const useVentasAnalytics = () => {
     setFechaSeleccionada(obtenerFechaActual())
     setFechaInicio("")
     setFechaFin("")
-
     setVentasPeriodo([])
     setFiltroAplicado(false)
   }

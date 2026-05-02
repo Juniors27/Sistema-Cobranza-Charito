@@ -15,6 +15,18 @@ class PagoSerializer(serializers.ModelSerializer):
             'notas',
         ]
 
+class PagoDashboardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pago
+        fields = [
+            'id',
+            'venta',
+            'fecha_pago',
+            'monto',
+            'es_primer_pago',
+            'es_descuento',
+        ]
+
 class PagoReporteSerializer(serializers.ModelSerializer):
     venta_id = serializers.IntegerField(source='venta.id') 
     numeroContrato = serializers.CharField(source='venta.numero_contrato')

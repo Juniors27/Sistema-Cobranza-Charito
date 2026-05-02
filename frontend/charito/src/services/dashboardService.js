@@ -1,32 +1,86 @@
 // src/config/services/dashboardService.js
 import { API } from "@/src/config/api"
+import { limpiarCacheRequest, obtenerJsonCacheado } from "@/src/utils/requestCache"
+
+const DASHBOARD_CACHE_TTL = 60_000
+
+const obtenerResumenCacheKey = ({ periodo, fechaInicio, fechaFin }) =>
+  `dashboard:resumen:${periodo || "semana_laboral"}:${fechaInicio || ""}:${fechaFin || ""}`
 
 export const dashboardService = {
-  async getVentas() {
-    const res = await fetch(`${API.ventas.lista}?modulo=dashboard`, {
-      headers: { "Content-Type": "application/json" },
-    })
+  async getResumen(params = {}, opciones = {}) {
+    const query = new URLSearchParams()
 
-    if (!res.ok) throw new Error("Error al cargar ventas")
-    return res.json()
+    if (params.periodo) query.append("periodo", params.periodo)
+    if (params.fechaInicio) query.append("fecha_inicio", params.fechaInicio)
+    if (params.fechaFin) query.append("fecha_fin", params.fechaFin)
+
+    const key = obtenerResumenCacheKey(params)
+    if (opciones.force) {
+      limpiarCacheRequest(key)
+    }
+
+    const url = query.toString()
+      ? `${API.dashboard.resumen}?${query.toString()}`
+      : API.dashboard.resumen
+
+    return obtenerJsonCacheado({
+      key,
+      ttlMs: DASHBOARD_CACHE_TTL,
+      fetcher: async () => {
+        const res = await fetch(url, {
+          headers: { "Content-Type": "application/json" },
+        })
+
+        if (!res.ok) throw new Error("Error al cargar resumen del dashboard")
+        return res.json()
+      },
+    })
+  },
+
+  async getVentas() {
+    return obtenerJsonCacheado({
+      key: "dashboard:ventas",
+      ttlMs: DASHBOARD_CACHE_TTL,
+      fetcher: async () => {
+        const res = await fetch(`${API.ventas.lista}?modulo=dashboard`, {
+          headers: { "Content-Type": "application/json" },
+        })
+
+        if (!res.ok) throw new Error("Error al cargar ventas")
+        return res.json()
+      },
+    })
   },
 
   async getCobradores() {
-    const res = await fetch(API.cobradores.lista, {
-      headers: { "Content-Type": "application/json" },
-    })
+    return obtenerJsonCacheado({
+      key: "dashboard:cobradores",
+      ttlMs: DASHBOARD_CACHE_TTL,
+      fetcher: async () => {
+        const res = await fetch(API.cobradores.lista, {
+          headers: { "Content-Type": "application/json" },
+        })
 
-    if (!res.ok) throw new Error("Error al cargar cobradores")
-    return res.json()
+        if (!res.ok) throw new Error("Error al cargar cobradores")
+        return res.json()
+      },
+    })
   },
 
   async getPagos() {
-    const res = await fetch(API.pagos.lista, {
-      headers: { "Content-Type": "application/json" },
-    })
+    return obtenerJsonCacheado({
+      key: "dashboard:pagos",
+      ttlMs: DASHBOARD_CACHE_TTL,
+      fetcher: async () => {
+        const res = await fetch(`${API.pagos.lista}?modulo=dashboard`, {
+          headers: { "Content-Type": "application/json" },
+        })
 
-    if (!res.ok) throw new Error("Error al cargar pagos")
-    return res.json()
+        if (!res.ok) throw new Error("Error al cargar pagos")
+        return res.json()
+      },
+    })
   },
 
   async getContratosSalida(params = {}) {

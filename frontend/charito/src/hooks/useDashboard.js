@@ -1,18 +1,34 @@
 // src/config/hooks/useDashboard.js
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { dashboardService } from "@/src/services/dashboardService"
-import {
-  calcularMetricasDashboard,
-  obtenerEtiquetaPeriodoDashboard,
-} from "@/src/utils/dashboardUtils"
+import { obtenerEtiquetaPeriodoDashboard } from "@/src/utils/dashboardUtils"
 import { toast } from "sonner"
 
+const metricasIniciales = {
+  totalVentasActivas: 0,
+  clientesPorZona: {
+    milagro: 0,
+    huanchaco: 0,
+    buenosAires: 0,
+  },
+  clientesPorCobrador: [],
+  canceladasPorCobrador: [],
+  contratosPrimerCobroPeriodo: [],
+  primerosCobrosPorCobrador: [],
+  contratosPendientesProgramacion: [],
+  resumenClientesCriticos: {
+    total: 0,
+    saldoTotal: 0,
+    cobradoresComprometidos: 0,
+    top: [],
+    lista: [],
+  },
+}
+
 export const useDashboard = () => {
-  const [ventas, setVentas] = useState([])
-  const [cobradores, setCobradores] = useState([])
-  const [pagos, setPagos] = useState([])
+  const [metricas, setMetricas] = useState(metricasIniciales)
   const [periodo, setPeriodo] = useState("semana_laboral")
   const [fechaInicio, setFechaInicio] = useState("")
   const [fechaFin, setFechaFin] = useState("")
@@ -20,20 +36,21 @@ export const useDashboard = () => {
   const [error, setError] = useState(null)
   const [guardandoProgramacionId, setGuardandoProgramacionId] = useState(null)
 
-  const cargarDatos = async (showToast = false) => {
+  const cargarDatos = useCallback(async (showToast = false, opciones = {}) => {
     setLoading(true)
     setError(null)
 
     try {
-      const [ventasData, cobradoresData, pagosData] = await Promise.all([
-        dashboardService.getVentas(),
-        dashboardService.getCobradores(),
-        dashboardService.getPagos(),
-      ])
+      const resumen = await dashboardService.getResumen(
+        {
+          periodo,
+          fechaInicio,
+          fechaFin,
+        },
+        opciones
+      )
 
-      setVentas(ventasData)
-      setCobradores(cobradoresData)
-      setPagos(pagosData)
+      setMetricas(resumen)
 
       if(showToast){
         toast.success("Dashboard actualizado correctamente")  
@@ -45,24 +62,11 @@ export const useDashboard = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [fechaFin, fechaInicio, periodo])
 
   useEffect(() => {
     cargarDatos()
-  }, [])
-
-  const metricas = useMemo(
-    () =>
-      calcularMetricasDashboard(
-        ventas,
-        cobradores,
-        pagos,
-        periodo,
-        fechaInicio,
-        fechaFin
-      ),
-    [ventas, cobradores, pagos, periodo, fechaInicio, fechaFin]
-  )
+  }, [cargarDatos])
 
   const etiquetaPeriodo = obtenerEtiquetaPeriodoDashboard(
     periodo,
@@ -71,11 +75,9 @@ export const useDashboard = () => {
   )
 
   const actualizarVentaEnEstado = (ventaActualizada) => {
-    setVentas((prevVentas) =>
-      prevVentas.map((venta) =>
-        venta.id === ventaActualizada.id ? { ...venta, ...ventaActualizada } : venta
-      )
-    )
+    if (ventaActualizada) {
+      cargarDatos(false, { force: true })
+    }
   }
 
   const guardarFechaPrimerCobro = async (ventaId, fechaPrimerCobro) => {
@@ -122,6 +124,7 @@ export const useDashboard = () => {
 
   return {
     ...metricas,
+    ventasActivas: { length: metricas.totalVentasActivas || 0 },
     periodo,
     setPeriodo,
     fechaInicio,
@@ -131,7 +134,7 @@ export const useDashboard = () => {
     etiquetaPeriodo,
     loading,
     error,
-    cargarDatos,
+    cargarDatos: (showToast = false) => cargarDatos(showToast, { force: true }),
     guardandoProgramacionId,
     guardarFechaPrimerCobro,
     marcarEntregaCobrador,

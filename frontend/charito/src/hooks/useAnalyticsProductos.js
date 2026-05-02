@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import { getVentas, getVentasFiltradas } from "@/src/services/ventasService"
-import {
-  agruparProductos,
-  obtenerMesesDisponibles
-} from "@/src/utils/productosUtils"
+import { getVentasFiltradas } from "@/src/services/ventasService"
+import { agruparProductos } from "@/src/utils/productosUtils"
+import { obtenerMesActual, obtenerMesesRecientes } from "@/src/utils/ventasAnalyticsUtils"
 
 export const useAnalyticsProductos = () => {
   const [filterType, setFilterType] = useState("mes")
@@ -17,29 +15,16 @@ export const useAnalyticsProductos = () => {
   const [productosFiltrados, setProductosFiltrados] = useState([])
   const [filtroAplicado, setFiltroAplicado] = useState(false)
 
-  /* =========================
-     CARGAR MESES INICIALES
-  ========================== */
   useEffect(() => {
-    const cargarMeses = async () => {
-      try {
-        // Para poblar meses no hace falta traer el listado pesado con detalle completo.
-        const ventas = await getVentas({ modulo: "dashboard" })
-        const meses = obtenerMesesDisponibles(ventas)
+    const meses = obtenerMesesRecientes()
+    const mesActual = obtenerMesActual()
+    const mesInicial =
+      meses.find((item) => item.value === mesActual)?.value || meses[0]?.value || ""
 
-        setMesesDisponibles(meses)
-        setMesSeleccionado(meses[0]?.value || "")
-      } catch {
-        toast.error("Error cargando meses")
-      }
-    }
-
-    cargarMeses()
+    setMesesDisponibles(meses)
+    setMesSeleccionado(mesInicial)
   }, [])
 
-  /* =========================
-     APLICAR FILTRO
-  ========================== */
   const aplicarFiltro = async () => {
     try {
       let data = []
@@ -50,7 +35,11 @@ export const useAnalyticsProductos = () => {
           return
         }
 
-        data = await getVentasFiltradas({ mes: mesSeleccionado, detallado: true })
+        data = await getVentasFiltradas({
+          mes: mesSeleccionado,
+          detallado: true,
+          modulo: "dashboard",
+        })
       }
 
       if (filterType === "rango") {
@@ -68,45 +57,42 @@ export const useAnalyticsProductos = () => {
           fechaInicio,
           fechaFin,
           detallado: true,
+          modulo: "dashboard",
         })
       }
 
       if (!data.length) {
         setProductosFiltrados([])
         setFiltroAplicado(true)
-        toast.info("No hay ventas en ese período")
+        toast.info("No hay ventas en ese periodo")
         return
       }
 
-      const productos = agruparProductos(data)
-
-      setProductosFiltrados(productos)
+      setProductosFiltrados(agruparProductos(data))
       setFiltroAplicado(true)
       toast.success("Filtro aplicado")
-
     } catch {
       toast.error("Error cargando ventas")
     }
   }
 
   const limpiarFiltro = () => {
+    const mesActual = obtenerMesActual()
+    const mesPorDefecto =
+      mesesDisponibles.find((item) => item.value === mesActual)?.value ||
+      mesesDisponibles[0]?.value ||
+      ""
+
     setProductosFiltrados([])
     setFiltroAplicado(false)
     setFechaInicio("")
     setFechaFin("")
-    setMesSeleccionado(mesesDisponibles[0]?.value || "")
+    setMesSeleccionado(mesPorDefecto)
     toast.info("Filtro limpiado")
   }
 
-  const totalMonto = productosFiltrados.reduce(
-    (s, p) => s + p.precioTotal,
-    0
-  )
-
-  const totalCantidad = productosFiltrados.reduce(
-    (s, p) => s + p.cantidad,
-    0
-  )
+  const totalMonto = productosFiltrados.reduce((suma, producto) => suma + producto.precioTotal, 0)
+  const totalCantidad = productosFiltrados.reduce((suma, producto) => suma + producto.cantidad, 0)
 
   return {
     filterType,
@@ -123,6 +109,6 @@ export const useAnalyticsProductos = () => {
     aplicarFiltro,
     limpiarFiltro,
     totalMonto,
-    totalCantidad
+    totalCantidad,
   }
 }

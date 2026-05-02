@@ -1,4 +1,7 @@
 import { API } from "@/src/config/api"
+import { obtenerJsonCacheado } from "@/src/utils/requestCache"
+
+const VENTAS_CACHE_TTL = 60_000
 
 /* =========================
    OBTENER TODAS LAS VENTAS
@@ -12,13 +15,21 @@ export const getVentas = async ({ detallado = false, modulo = "" } = {}) => {
   const url = params.toString()
     ? `${API.ventas.lista}?${params.toString()}`
     : API.ventas.lista
-  const res = await fetch(url)
+  const cacheKey = `ventas:${url}`
 
-  if (!res.ok) {
-    throw new Error("Error obteniendo ventas")
-  }
+  return obtenerJsonCacheado({
+    key: cacheKey,
+    ttlMs: VENTAS_CACHE_TTL,
+    fetcher: async () => {
+      const res = await fetch(url)
 
-  return res.json()
+      if (!res.ok) {
+        throw new Error("Error obteniendo ventas")
+      }
+
+      return res.json()
+    },
+  })
 }
 
 /* =========================
@@ -46,13 +57,21 @@ export const getVentasFiltradas = async ({
     url += `?${params.toString()}`
   }
 
-  const res = await fetch(url)
+  const cacheKey = `ventas-filtradas:${url}`
 
-  if (!res.ok) {
-    throw new Error("Error filtrando ventas")
-  }
+  return obtenerJsonCacheado({
+    key: cacheKey,
+    ttlMs: VENTAS_CACHE_TTL,
+    fetcher: async () => {
+      const res = await fetch(url)
 
-  return res.json()
+      if (!res.ok) {
+        throw new Error("Error filtrando ventas")
+      }
+
+      return res.json()
+    },
+  })
 }
 
 export const getVentaDetalle = async (ventaId) => {

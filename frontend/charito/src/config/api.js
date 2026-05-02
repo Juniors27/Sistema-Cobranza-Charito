@@ -23,6 +23,10 @@ export const API = {
     cobranza: `${API_BASE_URL}/reporte/cobranza/`,
   },
 
+  dashboard: {
+    resumen: `${API_BASE_URL}/dashboard/resumen/`,
+  },
+
   clientes: {
     lista: `${API_BASE_URL}/lista/clientes/`,
     exportar: `${API_BASE_URL}/exportar/clientes/`,

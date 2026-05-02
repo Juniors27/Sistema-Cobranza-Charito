@@ -15,6 +15,7 @@ import {
 import { LoadingScreen, ErrorScreen, SectionHeader } from "@/components/ui"
 import { useDashboard } from "@/src/hooks/useDashboard"
 import { exportarClientesCriticosExcel } from "@/src/utils/dashboardUtils"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 import { toast } from "sonner"
 
 const periodos = [
@@ -126,7 +127,10 @@ function PanelClientesCriticos({ resumenClientesCriticos }) {
               {clientesVisibles.map((cliente, index) => (
                 <tr key={cliente.id} className="border-t border-rose-100">
                   <td className="px-4 py-3">
-                    <div className="font-semibold text-slate-900">{cliente.numero_contrato}</div>
+                    <div className="font-semibold text-slate-900">
+                      {cliente.codigo_contrato ||
+                        formatearCodigoContrato(cliente.lote, cliente.numero_contrato)}
+                    </div>
                     <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-rose-700">
                       <Flame className="h-3.5 w-3.5" />
                       #{(mostrarTodos ? lista : top).findIndex((item) => item.id === cliente.id) + 1} prioridad

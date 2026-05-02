@@ -38,9 +38,6 @@ export const getReporteCobranza = async (params) => {
     throw new Error("Error filtrando reporte de cobranza")
   }
 
-  
-console.log("DATOS REPORTE:", data)
-
   return data
 }
 
