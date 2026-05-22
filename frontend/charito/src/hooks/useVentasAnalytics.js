@@ -27,13 +27,14 @@ const consultarVentasFiltradas = async ({
   currentFechaFin,
 }) => {
   if (currentFilterType === FILTER_TYPES.mes) {
-    return getVentasFiltradas({ mes: currentMes, modulo: "dashboard" })
+    return getVentasFiltradas({ mes: currentMes, detallado: true, modulo: "dashboard" })
   }
 
   if (currentFilterType === FILTER_TYPES.fecha) {
     return getVentasFiltradas({
       fechaInicio: currentFecha,
       fechaFin: currentFecha,
+      detallado: true,
       modulo: "dashboard",
     })
   }
@@ -41,6 +42,7 @@ const consultarVentasFiltradas = async ({
   return getVentasFiltradas({
     fechaInicio: currentFechaInicio,
     fechaFin: currentFechaFin,
+    detallado: true,
     modulo: "dashboard",
   })
 }

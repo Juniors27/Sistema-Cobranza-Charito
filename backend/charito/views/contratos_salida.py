@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from django.db.models import Count, Q, Sum
+from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.utils import timezone
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
@@ -45,6 +45,7 @@ class ContratosSalidaListView(APIView):
             Venta.objects.select_related("cobrador")
             .only(
                 "id",
+                "lote",
                 "numero_contrato",
                 "fecha_venta",
                 "nombre",
@@ -94,12 +95,27 @@ class ContratosSalidaListView(APIView):
                 | Q(cobrador__nombre__icontains=busqueda)
             )
 
-        queryset = queryset.order_by("fecha_primer_cobro", "numero_contrato")
+        if periodo == "historico":
+            queryset = queryset.annotate(
+                orden_estado_historico=Case(
+                    When(estado="recogido", then=Value(0)),
+                    When(primer_pago_registrado=False, then=Value(1)),
+                    When(primer_pago_registrado=True, then=Value(2)),
+                    default=Value(3),
+                    output_field=IntegerField(),
+                )
+            ).order_by("orden_estado_historico", "fecha_primer_cobro", "numero_contrato")
+        else:
+            queryset = queryset.order_by("fecha_primer_cobro", "numero_contrato")
 
         resumen_base = queryset.aggregate(
             total=Count("id"),
             entregados=Count("id", filter=Q(entregado_cobrador=True)),
-            ya_pagaron=Count("id", filter=Q(primer_pago_registrado=True)),
+            recogidos=Count("id", filter=Q(estado="recogido")),
+            ya_pagaron=Count(
+                "id",
+                filter=Q(primer_pago_registrado=True) & ~Q(estado__in=estados_inactivos),
+            ),
             pendientes_primer_pago=Count(
                 "id",
                 filter=Q(primer_pago_registrado=False) & ~Q(estado__in=estados_inactivos),
@@ -113,6 +129,7 @@ class ContratosSalidaListView(APIView):
         resumen = {
             "total": total,
             "entregados": resumen_base["entregados"] or 0,
+            "recogidos": resumen_base["recogidos"] or 0,
             "yaPagaron": ya_pagaron,
             "pendientesPrimerPago": resumen_base["pendientes_primer_pago"] or 0,
             "saldoTotal": resumen_base["saldo_total"] or 0,
@@ -124,7 +141,11 @@ class ContratosSalidaListView(APIView):
             .annotate(
                 total=Count("id"),
                 entregados=Count("id", filter=Q(entregado_cobrador=True)),
-                yaPagaron=Count("id", filter=Q(primer_pago_registrado=True)),
+                recogidos=Count("id", filter=Q(estado="recogido")),
+                yaPagaron=Count(
+                    "id",
+                    filter=Q(primer_pago_registrado=True) & ~Q(estado__in=estados_inactivos),
+                ),
                 pendientes=Count(
                     "id",
                     filter=Q(primer_pago_registrado=False) & ~Q(estado__in=estados_inactivos),
@@ -140,6 +161,7 @@ class ContratosSalidaListView(APIView):
                 "zona": item["cobrador__zona"] or "",
                 "total": item["total"],
                 "entregados": item["entregados"],
+                "recogidos": item["recogidos"],
                 "yaPagaron": item["yaPagaron"],
                 "pendientes": item["pendientes"],
             }

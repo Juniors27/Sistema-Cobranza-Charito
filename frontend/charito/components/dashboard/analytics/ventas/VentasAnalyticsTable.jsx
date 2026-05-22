@@ -10,6 +10,7 @@ export default function VentasAnalyticsTable({
   ventasFiltradas,
   ventasPorFecha,
   loadingFiltro,
+  totalContratosConInicial = 0,
 }) {
   if (!filtroAplicado && !loadingFiltro) return null
 
@@ -35,6 +36,11 @@ export default function VentasAnalyticsTable({
         <EmptyState mensaje="No hay ventas registradas para el filtro seleccionado." />
       ) : (
         <div className="mt-6 space-y-6">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <span className="font-semibold">{totalContratosConInicial}</span>{" "}
+            contratos del resultado dieron inicial. En el detalle aparecen marcados en amarillo.
+          </div>
+
           <div className="overflow-x-auto rounded-2xl border border-slate-200">
             <table className="w-full min-w-230 text-sm text-slate-800">
               <thead className="bg-slate-50 text-slate-700">
@@ -73,35 +79,60 @@ export default function VentasAnalyticsTable({
                   <th className="px-4 py-3 text-left font-semibold">Productos</th>
                   <th className="px-4 py-3 text-center font-semibold">Cantidad</th>
                   <th className="px-4 py-3 text-right font-semibold">Monto</th>
+                  <th className="px-4 py-3 text-right font-semibold">Inicial</th>
                 </tr>
               </thead>
               <tbody>
-                {ventasFiltradas.map((venta) => (
-                  <tr key={venta.id} className="border-t border-slate-100 align-top">
-                    <td className="px-4 py-3 font-semibold text-slate-900">
-                      {venta.numero_contrato}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900">{venta.cliente}</div>
-                      <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
-                        {venta.zona}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {formatearFecha(venta.fecha_venta)}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {venta.cobrador_nombre || "Sin cobrador"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {venta.producto_nombre || "Sin detalle"}
-                    </td>
-                    <td className="px-4 py-3 text-center">{venta.cantidad}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-sky-700">
-                      {formatearMoneda(venta.precio_total)}
-                    </td>
-                  </tr>
-                ))}
+                {ventasFiltradas.map((venta) => {
+                  const inicial = Number(venta.inicial || 0)
+                  const dioInicial = inicial > 0
+
+                  return (
+                    <tr
+                      key={venta.id}
+                      className={`border-t align-top ${
+                        dioInicial
+                          ? "border-amber-100 bg-amber-50/70"
+                          : "border-slate-100"
+                      }`}
+                    >
+                      <td className="px-4 py-3 font-semibold text-slate-900">
+                        <div>{venta.codigo_contrato || venta.numero_contrato}</div>
+                        {dioInicial && (
+                          <span className="mt-2 inline-flex rounded-full border border-amber-200 bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                            Dio inicial
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-900">{venta.cliente}</div>
+                        <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
+                          {venta.zona}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {formatearFecha(venta.fecha_venta)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {venta.cobrador_nombre || "Sin cobrador"}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {venta.producto_nombre || "Sin detalle"}
+                      </td>
+                      <td className="px-4 py-3 text-center">{venta.cantidad}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-sky-700">
+                        {formatearMoneda(venta.precio_total)}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right font-semibold ${
+                          dioInicial ? "text-amber-800" : "text-slate-400"
+                        }`}
+                      >
+                        {dioInicial ? formatearMoneda(inicial) : "-"}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

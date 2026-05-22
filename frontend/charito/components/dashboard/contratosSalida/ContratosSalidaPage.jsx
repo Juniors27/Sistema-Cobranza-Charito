@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { CalendarRange, ClipboardList, PackageCheck, Truck } from "lucide-react"
+import { ClipboardList, PackageCheck, RotateCcw, Truck } from "lucide-react"
 import { ErrorScreen, LoadingScreen, SectionHeader } from "@/components/ui"
 import { useContratosSalida } from "@/src/hooks/useContratosSalida"
 import TarjetaResumen from "./TarjetaResumen"
@@ -121,16 +121,16 @@ export default function ContratosSalidaPage() {
           tono="sky"
         />
         <TarjetaResumen
-          titulo="Entregados"
-          valor={salida.resumen.entregados}
-          detalle="Ya salieron al cobrador"
-          icono={CalendarRange}
+          titulo="Recogidos"
+          valor={salida.resumen.recogidos}
+          detalle="Contratos recuperados"
+          icono={RotateCcw}
           tono="slate"
         />
         <TarjetaResumen
           titulo="Con primer pago"
           valor={salida.resumen.yaPagaron}
-          detalle="Ya registraron su primer abono"
+          detalle="Activos con primer abono"
           icono={PackageCheck}
           tono="emerald"
         />

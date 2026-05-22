@@ -147,11 +147,16 @@ export const resumirVentas = (ventas = []) => {
     0
   )
 
+  const totalContratosConInicial = ventas.filter(
+    (venta) => Number(venta.inicial || 0) > 0
+  ).length
+
   return {
     totalVentas,
     totalMonto,
     totalUnidades,
     totalInicial,
+    totalContratosConInicial,
     ticketPromedio: totalVentas > 0 ? totalMonto / totalVentas : 0,
     promedioUnidades: totalVentas > 0 ? totalUnidades / totalVentas : 0,
   }
@@ -252,6 +257,7 @@ export const exportarVentasReporteExcel = ({
       "Monto vendido": Number(resumen.totalMonto || 0).toFixed(2),
       "Unidades vendidas": resumen.totalUnidades || 0,
       "Iniciales registradas": Number(resumen.totalInicial || 0).toFixed(2),
+      "Contratos con inicial": resumen.totalContratosConInicial || 0,
     },
   ])
 
@@ -266,7 +272,7 @@ export const exportarVentasReporteExcel = ({
 
   const hojaDetalle = XLSX.utils.json_to_sheet(
     ventas.map((venta) => ({
-      Contrato: venta.numero_contrato,
+      Contrato: venta.codigo_contrato || venta.numero_contrato,
       Cliente: venta.cliente,
       Fecha: formatearFecha(venta.fecha_venta),
       Zona: venta.zona,
@@ -274,7 +280,9 @@ export const exportarVentasReporteExcel = ({
       Productos: venta.producto_nombre || "Sin detalle",
       Cantidad: venta.cantidad,
       "Monto vendido": Number(venta.precio_total || 0).toFixed(2),
+      "Dio inicial": Number(venta.inicial || 0) > 0 ? "SI" : "NO",
       Inicial: Number(venta.inicial || 0).toFixed(2),
+      "Fecha inicial": venta.fecha_inicial ? formatearFecha(venta.fecha_inicial) : "",
     }))
   )
 
@@ -315,6 +323,7 @@ export const imprimirVentasReporte = ({
     ["Monto vendido", formatearMoneda(resumen.totalMonto || 0)],
     ["Unidades vendidas", resumen.totalUnidades || 0],
     ["Iniciales registradas", formatearMoneda(resumen.totalInicial || 0)],
+    ["Contratos con inicial", resumen.totalContratosConInicial || 0],
   ]
 
   const html = `<!doctype html>
@@ -334,6 +343,9 @@ export const imprimirVentasReporte = ({
       table { width: 100%; border-collapse: collapse; margin-top: 12px; }
       th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 12px; vertical-align: top; }
       th { background: #f8fafc; }
+      .row-inicial { background: #fffbeb; }
+      .tag-inicial { display: inline-block; margin-top: 4px; border: 1px solid #fcd34d; border-radius: 999px; padding: 2px 8px; background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 700; }
+      .money-inicial { color: #92400e; font-weight: 700; }
       .section { margin-top: 28px; }
       @media print {
         body { margin: 12mm; }
@@ -402,23 +414,31 @@ export const imprimirVentasReporte = ({
             <th>Productos</th>
             <th>Cantidad</th>
             <th>Monto</th>
+            <th>Inicial</th>
           </tr>
         </thead>
         <tbody>
           ${ventas
-            .map(
-              (venta) => `
-                <tr>
-                  <td>${escaparHtml(venta.numero_contrato)}</td>
+            .map((venta) => {
+              const inicial = Number(venta.inicial || 0)
+              const dioInicial = inicial > 0
+
+              return `
+                <tr class="${dioInicial ? "row-inicial" : ""}">
+                  <td>
+                    ${escaparHtml(venta.codigo_contrato || venta.numero_contrato)}
+                    ${dioInicial ? '<span class="tag-inicial">Dio inicial</span>' : ""}
+                  </td>
                   <td>${escaparHtml(venta.cliente)}</td>
                   <td>${escaparHtml(formatearFecha(venta.fecha_venta))}</td>
                   <td>${escaparHtml(venta.cobrador_nombre || "Sin cobrador")}</td>
                   <td>${escaparHtml(venta.producto_nombre || "Sin detalle")}</td>
                   <td>${escaparHtml(venta.cantidad)}</td>
                   <td>${escaparHtml(formatearMoneda(venta.precio_total))}</td>
+                  <td class="${dioInicial ? "money-inicial" : ""}">${dioInicial ? escaparHtml(formatearMoneda(inicial)) : "-"}</td>
                 </tr>
               `
-            )
+            })
             .join("")}
         </tbody>
       </table>

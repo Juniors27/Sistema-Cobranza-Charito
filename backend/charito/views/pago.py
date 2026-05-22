@@ -23,11 +23,19 @@ class RegistrarPagoView(APIView):
                 pago = serializer.save(
                     usuario_registro=request.user if request.user.is_authenticated else None
                 )
+                ultimo_pago = (
+                    Pago.objects.filter(venta=pago.venta)
+                    .order_by("-fecha_pago", "-fecha_registro")
+                    .first()
+                )
                 return Response(
                     {
                         "mensaje": "Pago registrado correctamente",
+                        "pago": PagoSerializer(pago).data,
+                        "ultimo_pago": PagoSerializer(ultimo_pago).data,
                         "saldo_pendiente": pago.venta.saldo_pendiente,
                         "estado_venta": pago.venta.estado,
+                        "primer_pago_registrado": pago.venta.primer_pago_registrado,
                     },
                     status=status.HTTP_201_CREATED,
                 )
@@ -275,11 +283,17 @@ class EditarPagoView(APIView):
             venta.save()
 
             serializer = PagoSerializer(pago)
+            ultimo_pago = (
+                Pago.objects.filter(venta=venta)
+                .order_by("-fecha_pago", "-fecha_registro")
+                .first()
+            )
 
             return Response(
                 {
                     "mensaje": "Pago actualizado correctamente",
                     "pago": serializer.data,
+                    "ultimo_pago": PagoSerializer(ultimo_pago).data,
                     "saldo_pendiente": float(venta.saldo_pendiente),
                     "estado_venta": venta.estado,
                 },
@@ -338,6 +352,11 @@ class EliminarPagoView(APIView):
 
             venta.save()
             pago.delete()
+            ultimo_pago_restante = (
+                Pago.objects.filter(venta=venta)
+                .order_by("-fecha_pago", "-fecha_registro")
+                .first()
+            )
 
             return Response(
                 {
@@ -345,6 +364,11 @@ class EliminarPagoView(APIView):
                     "saldo_pendiente": float(venta.saldo_pendiente),
                     "estado_venta": venta.estado,
                     "primer_pago_registrado": venta.primer_pago_registrado,
+                    "ultimo_pago": (
+                        PagoSerializer(ultimo_pago_restante).data
+                        if ultimo_pago_restante
+                        else None
+                    ),
                 },
                 status=status.HTTP_200_OK,
             )

@@ -121,9 +121,10 @@ class VentaListView(ListAPIView):
         ultimo_pago = Pago.objects.filter(
             venta=OuterRef('pk')
         ).order_by('-fecha_pago', '-fecha_registro')
+        detallado = self.request.query_params.get("detallado") == "1"
         modulo = self.request.query_params.get("modulo")
 
-        if modulo == "dashboard":
+        if modulo == "dashboard" and not detallado:
             queryset = Venta.objects.select_related("cobrador").only(
                 "id",
                 "numero_contrato",
@@ -147,7 +148,7 @@ class VentaListView(ListAPIView):
                 "entregado_cobrador",
                 "fecha_entrega_cobrador",
             ).order_by("-fecha_venta")
-        elif modulo == "control":
+        elif modulo == "control" and not detallado:
             queryset = Venta.objects.only(
                 "id",
                 "numero_contrato",

@@ -25,6 +25,8 @@ export default function ClienteEditModal({
 }) {
   if (!ventaEditar) return null
 
+  const aMayusculas = (valor) => valor.toLocaleUpperCase("es-PE")
+
   const loteActual = obtenerLoteDesdeFechaVenta(ventaEditar.fecha_venta)
 
   const totalProductos = (ventaEditar.productos || []).reduce(
@@ -91,10 +93,11 @@ export default function ClienteEditModal({
             <input
               type="text"
               value={ventaEditar.nombre}
+              autoCapitalize="characters"
               onChange={(e) =>
                 setVentaEditar({
                   ...ventaEditar,
-                  nombre: e.target.value,
+                  nombre: aMayusculas(e.target.value),
                 })
               }
               className="w-full rounded-xl border-2 border-gray-200 p-3"
@@ -106,10 +109,11 @@ export default function ClienteEditModal({
             <input
               type="text"
               value={ventaEditar.apellido}
+              autoCapitalize="characters"
               onChange={(e) =>
                 setVentaEditar({
                   ...ventaEditar,
-                  apellido: e.target.value,
+                  apellido: aMayusculas(e.target.value),
                 })
               }
               className="w-full rounded-xl border-2 border-gray-200 p-3"
@@ -121,10 +125,11 @@ export default function ClienteEditModal({
             <input
               type="text"
               value={ventaEditar.direccion}
+              autoCapitalize="characters"
               onChange={(e) =>
                 setVentaEditar({
                   ...ventaEditar,
-                  direccion: e.target.value,
+                  direccion: aMayusculas(e.target.value),
                 })
               }
               className="w-full rounded-xl border-2 border-gray-200 p-3"
@@ -156,8 +161,9 @@ export default function ClienteEditModal({
               <input
                 type="text"
                 value={buscarProductoEdit}
+                autoCapitalize="characters"
                 onChange={(e) => {
-                  setBuscarProductoEdit(e.target.value)
+                  setBuscarProductoEdit(aMayusculas(e.target.value))
                   setMostrarProductosEdit(true)
                 }}
                 className="w-full rounded-xl border-2 border-gray-200 p-3"
@@ -308,7 +314,10 @@ export default function ClienteEditModal({
             <input
               type="text"
               value={ventaEditar.dia_cobro || ""}
-              onChange={(e) => setVentaEditar({ ...ventaEditar, dia_cobro: e.target.value })}
+              autoCapitalize="characters"
+              onChange={(e) =>
+                setVentaEditar({ ...ventaEditar, dia_cobro: aMayusculas(e.target.value) })
+              }
               className="w-full rounded-xl border-2 border-gray-200 p-3"
             />
           </div>
@@ -318,7 +327,10 @@ export default function ClienteEditModal({
             <input
               type="text"
               value={ventaEditar.vendedor || ""}
-              onChange={(e) => setVentaEditar({ ...ventaEditar, vendedor: e.target.value })}
+              autoCapitalize="characters"
+              onChange={(e) =>
+                setVentaEditar({ ...ventaEditar, vendedor: aMayusculas(e.target.value) })
+              }
               className="w-full rounded-xl border-2 border-gray-200 p-3"
             />
           </div>

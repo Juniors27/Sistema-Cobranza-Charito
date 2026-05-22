@@ -48,20 +48,20 @@ export default function ContratosSalidaGrupos({
                   {cobradorFiltro === String(grupo.id) ? "Activo" : "Filtrar"}
                 </span>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-center text-xs">
                 <div className="rounded-2xl bg-sky-50 px-3 py-3 text-sky-800">
                   <div className="text-lg font-semibold">{grupo.total}</div>
                   <div>Total</div>
                 </div>
                 <div className="rounded-2xl bg-slate-100 px-3 py-3 text-slate-800">
-                  <div className="text-lg font-semibold">{grupo.entregados}</div>
-                  <div>Entregados</div>
+                  <div className="text-lg font-semibold">{grupo.recogidos}</div>
+                  <div>Recogidos</div>
                 </div>
                 <div className="rounded-2xl bg-emerald-50 px-3 py-3 text-emerald-800">
                   <div className="text-lg font-semibold">{grupo.yaPagaron}</div>
                   <div>Pagaron</div>
                 </div>
-                <div className="col-span-3 rounded-2xl bg-amber-50 px-3 py-3 text-amber-800">
+                <div className="rounded-2xl bg-amber-50 px-3 py-3 text-amber-800">
                   <div className="text-lg font-semibold">{grupo.pendientes}</div>
                   <div>Pendientes</div>
                 </div>

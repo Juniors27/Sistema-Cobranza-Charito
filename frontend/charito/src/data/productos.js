@@ -28,6 +28,7 @@ export const productos = [
   { id: 26, nombre: "OLLA PRESIÓN 7 LITROS", categoria: "otros" },
   { id: 27, nombre: "OLLAS DE ACERO X 6", categoria: "otros" },
   { id: 28, nombre: "OLLAS DE ALUMINIO", categoria: "otros" },
+  { id: 52, nombre: "OLLAS ROCA VOLCÁNICA", categoria: "otros" },
   { id: 29, nombre: "PLANCHA OSTER VAPOR", categoria: "electrodomesticos" },
   { id: 30, nombre: "PLANCHADOR MELAMINE", categoria: "roperos" },
   { id: 31, nombre: "PORTAVAGIA REY", categoria: "otros" },

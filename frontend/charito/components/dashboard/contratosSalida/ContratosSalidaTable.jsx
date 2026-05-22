@@ -3,11 +3,13 @@ import { Paginacion, PaginacionControles } from "@/components/ui"
 import {
   formatearFechaContratoSalida,
   formatearMontoContratoSalida,
+  obtenerCodigoContratoSalida,
   obtenerEstadoPrimerPagoContratoSalida,
 } from "./contratosSalidaUtils"
 
 function ContratoSalidaRow({ contrato, onEditarEntrega }) {
   const estadoPrimerPago = obtenerEstadoPrimerPagoContratoSalida(contrato)
+  const codigoContrato = obtenerCodigoContratoSalida(contrato)
 
   return (
     <tr
@@ -20,7 +22,7 @@ function ContratoSalidaRow({ contrato, onEditarEntrega }) {
           {formatearFechaContratoSalida(contrato.fecha_primer_cobro)}
         </span>
       </td>
-      <td className="px-4 py-3 font-semibold text-slate-900">{contrato.numero_contrato}</td>
+      <td className="px-4 py-3 font-semibold text-slate-900">{codigoContrato}</td>
       <td className="px-4 py-3 text-slate-700">
         <div className="font-medium text-slate-800">{contrato.cliente}</div>
       </td>
@@ -70,7 +72,7 @@ function ContratoSalidaRow({ contrato, onEditarEntrega }) {
         <button
           onClick={() => onEditarEntrega(contrato)}
           className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-sky-50 text-sky-800 transition-colors hover:bg-sky-100"
-          aria-label={`Editar contrato ${contrato.numero_contrato}`}
+          aria-label={`Editar contrato ${codigoContrato}`}
           title="Editar contrato"
         >
           <FilePenLine className="h-4 w-4" />

@@ -92,12 +92,12 @@ export const usePagos = () => {
 
   const buscarUltimoPago = async () => {
     if (!formPago.numeroContrato) {
-      toast.error("Ingresa un numero de contrato");
+      toast.error("Ingresa un número de contrato");
       return false;
     }
 
     if (requiereSeleccionContrato) {
-      toast.warning("Selecciona el contrato correcto antes de buscar el ultimo pago");
+      toast.warning("Selecciona el contrato correcto antes de buscar el último pago");
       return false;
     }
 
@@ -113,11 +113,12 @@ export const usePagos = () => {
 
     if (!res.ok) {
       toast.error(
-        data.mensaje || data.error || "No se encontro el ultimo pago",
+        data.mensaje || data.error || "No se encontro el último pago",
       );
       return false;
     }
 
+    actualizarVentaLocal(contratoActual, data, data.pago);
     setFormPago((prev) => ({ ...prev, monto: data.pago.monto }));
     setFechaPagoBatch(data.pago.fecha_pago);
     setCobradorBatch(data.pago.cobrador.toString());
@@ -169,7 +170,7 @@ export const usePagos = () => {
       return false;
     }
 
-    actualizarVentaLocal(venta, data);
+    actualizarVentaLocal(venta, data, data.ultimo_pago || payload);
     setVentaSeleccionadaId(null);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
     toast.success("Pago registrado exitosamente");
@@ -198,7 +199,7 @@ export const usePagos = () => {
     }
 
     const venta = contratoActual;
-    actualizarVentaLocal(venta, data);
+    actualizarVentaLocal(venta, data, data.ultimo_pago || data.pago);
     cancelarEdicion();
     toast.success("Pago editado exitosamente");
   };
@@ -219,7 +220,7 @@ export const usePagos = () => {
     }
 
     const venta = contratoActual;
-    actualizarVentaLocal(venta, data);
+    actualizarVentaLocal(venta, data, data.ultimo_pago || null);
     cancelarEdicion();
     toast.success("Pago eliminado exitosamente");
   };
@@ -263,20 +264,25 @@ export const usePagos = () => {
       return;
     }
 
-    actualizarVentaLocal(venta, data);
+    actualizarVentaLocal(venta, data, data.ultimo_pago || payload);
     setVentaSeleccionadaId(null);
     setFormPago({ numeroContrato: "", monto: "", montoInicial: "" });
     toast.success("Descuento aplicado correctamente");
   };
 
-  const actualizarVentaLocal = (venta, data) => {
+  const actualizarVentaLocal = (venta, data = {}, ultimoPago = data.pago) => {
+    if (!venta) return;
+
     const ventasActualizadas = ventas.map((v) =>
       v.id === venta.id
         ? {
             ...v,
-            saldo_pendiente: data.saldo_pendiente,
-            estado: data.estado_venta,
-            primer_pago_registrado: data.primer_pago_registrado ?? true,
+            saldo_pendiente: data.saldo_pendiente ?? v.saldo_pendiente,
+            estado: data.estado_venta ?? v.estado,
+            primer_pago_registrado:
+              data.primer_pago_registrado ?? (ultimoPago ? true : v.primer_pago_registrado),
+            ultimo_pago_fecha: ultimoPago?.fecha_pago ?? null,
+            ultimo_pago_monto: ultimoPago?.monto ?? null,
           }
         : v,
     );

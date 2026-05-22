@@ -1,4 +1,4 @@
-import { HandCoins, Package2, ReceiptText } from "lucide-react"
+import { BadgeCheck, HandCoins, Package2, ReceiptText } from "lucide-react"
 import { formatearMoneda } from "@/src/utils/ventasAnalyticsUtils"
 
 const INDICATOR_CARDS = [
@@ -23,6 +23,12 @@ const INDICATOR_CARDS = [
     money: true,
   },
   {
+    key: "totalContratosConInicial",
+    label: "Contratos con inicial",
+    color: "rose",
+    icon: BadgeCheck,
+  },
+  {
     key: "totalUnidades",
     label: "Unidades vendidas",
     color: "violet",
@@ -34,6 +40,7 @@ const COLOR_CLASSES = {
   sky: "border-sky-200 bg-sky-50 text-sky-700",
   emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
   amber: "border-amber-200 bg-amber-50 text-amber-700",
+  rose: "border-rose-200 bg-rose-50 text-rose-700",
   violet: "border-violet-200 bg-violet-50 text-violet-700",
 }
 
@@ -42,16 +49,18 @@ export default function VentasAnalyticsSummary({
   totalMonto,
   totalUnidades,
   totalInicial,
+  totalContratosConInicial,
 }) {
   const values = {
     totalVentas,
     totalMonto,
     totalInicial,
+    totalContratosConInicial,
     totalUnidades,
   }
 
   return (
-    <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-5">
       {INDICATOR_CARDS.map((card) => {
         const Icon = card.icon
         const value = values[card.key]

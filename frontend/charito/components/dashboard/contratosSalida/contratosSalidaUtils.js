@@ -1,4 +1,5 @@
 import { formatearFechaDMY } from "@/src/utils/clientesUtils"
+import { formatearCodigoContrato } from "@/src/utils/contratosUtils"
 
 export const periodosContratosSalida = [
   { id: "semana_laboral", label: "Semana Laboral" },
@@ -8,6 +9,12 @@ export const periodosContratosSalida = [
 
 export const formatearFechaContratoSalida = (fecha) =>
   formatearFechaDMY(fecha) || "No definida"
+
+export const obtenerCodigoContratoSalida = (contrato) =>
+  contrato?.codigo_contrato ||
+  formatearCodigoContrato(contrato?.lote, contrato?.numero_contrato) ||
+  contrato?.numero_contrato ||
+  ""
 
 export const formatearMontoContratoSalida = (monto) => `S/ ${Number(monto || 0).toFixed(2)}`
 

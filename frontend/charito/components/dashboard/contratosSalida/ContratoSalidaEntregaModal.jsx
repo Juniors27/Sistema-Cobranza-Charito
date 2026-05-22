@@ -1,5 +1,5 @@
 import { X } from "lucide-react"
-import { formatearFechaContratoSalida } from "./contratosSalidaUtils"
+import { formatearFechaContratoSalida, obtenerCodigoContratoSalida } from "./contratosSalidaUtils"
 
 export default function ContratoSalidaEntregaModal({
   contrato,
@@ -12,6 +12,7 @@ export default function ContratoSalidaEntregaModal({
   if (!contrato) return null
 
   const entregaActual = valorEntrega(contrato)
+  const codigoContrato = obtenerCodigoContratoSalida(contrato)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
@@ -22,7 +23,7 @@ export default function ContratoSalidaEntregaModal({
               Gestion de entrega
             </div>
             <h3 className="mt-2 text-2xl font-semibold text-slate-900">
-              {contrato.numero_contrato}
+              {codigoContrato}
             </h3>
             <p className="mt-2 text-sm text-slate-600">{contrato.cliente}</p>
           </div>
