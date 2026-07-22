@@ -6,6 +6,7 @@ import {
   eliminarObservacionControl,
   getControlTarjetas,
   getObservacionesControl,
+  getTodasControlTarjetas,
   registrarObservacionControl,
 } from "../services/controlTarjetasService"
 
@@ -204,15 +205,13 @@ export const useControlTarjetas = () => {
 
   const controlTarjetasExcel = async () => {
     try {
-      const data = await getControlTarjetas({
-        page: 1,
-        pageSize: 5000,
+      const ventas = await getTodasControlTarjetas({
         lote: filtrosBusqueda.lote,
         numeroContrato: filtrosBusqueda.numeroContrato,
         nombreCliente: filtrosBusqueda.nombreCliente,
         filtro,
       })
-      exportarControlTarjetasExcel(data.results || [])
+      exportarControlTarjetasExcel(ventas)
     } catch (err) {
       toast.error(err.message || "No se pudo exportar el control")
     }

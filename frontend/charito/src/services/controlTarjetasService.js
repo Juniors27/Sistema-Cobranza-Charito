@@ -27,6 +27,38 @@ export const getControlTarjetas = async ({
   return res.json()
 }
 
+export const getTodasControlTarjetas = async ({
+  lote = "",
+  numeroContrato = "",
+  nombreCliente = "",
+  filtro = "todos",
+} = {}) => {
+  const pageSize = 100
+  let page = 1
+  let total = 0
+  const results = []
+
+  do {
+    const data = await getControlTarjetas({
+      page,
+      pageSize,
+      lote,
+      numeroContrato,
+      nombreCliente,
+      filtro,
+    })
+    const pageResults = Array.isArray(data.results) ? data.results : []
+
+    results.push(...pageResults)
+    total = Number(data.count || results.length)
+
+    if (pageResults.length === 0) break
+    page += 1
+  } while (results.length < total)
+
+  return results
+}
+
 
 /* =========================
    OBTENER PAGOS

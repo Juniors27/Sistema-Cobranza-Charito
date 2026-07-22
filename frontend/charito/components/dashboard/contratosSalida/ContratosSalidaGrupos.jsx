@@ -54,16 +54,20 @@ export default function ContratosSalidaGrupos({
                   <div>Total</div>
                 </div>
                 <div className="rounded-2xl bg-slate-100 px-3 py-3 text-slate-800">
-                  <div className="text-lg font-semibold">{grupo.recogidos}</div>
-                  <div>Recogidos</div>
+                  <div className="text-lg font-semibold">{grupo.inactivos}</div>
+                  <div>Inactivos</div>
+                  <div className="mt-1 text-[10px] text-slate-500">
+                    {grupo.recogidos} rec. · {grupo.cancelados} canc.
+                    {grupo.bajados ? ` · ${grupo.bajados} baj.` : ""}
+                  </div>
                 </div>
                 <div className="rounded-2xl bg-emerald-50 px-3 py-3 text-emerald-800">
                   <div className="text-lg font-semibold">{grupo.yaPagaron}</div>
-                  <div>Pagaron</div>
+                  <div>Activos pagaron</div>
                 </div>
                 <div className="rounded-2xl bg-amber-50 px-3 py-3 text-amber-800">
                   <div className="text-lg font-semibold">{grupo.pendientes}</div>
-                  <div>Pendientes</div>
+                  <div>Activos pendientes</div>
                 </div>
               </div>
             </button>

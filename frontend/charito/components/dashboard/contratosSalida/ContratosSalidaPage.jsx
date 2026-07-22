@@ -19,6 +19,13 @@ export default function ContratosSalidaPage() {
   const [entregaForm, setEntregaForm] = useState({})
   const [contratoEnEdicion, setContratoEnEdicion] = useState(null)
   const filtroTodosActivo = salida.cobradorFiltro === "todos"
+  const detalleInactivos = [
+    `${salida.resumen.recogidos || 0} recogidos`,
+    `${salida.resumen.cancelados || 0} cancelados`,
+    salida.resumen.bajados ? `${salida.resumen.bajados} bajados` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ")
 
   const etiquetaPeriodo = useMemo(() => {
     if (salida.periodo === "historico") return "Historial completo de contratos entregados"
@@ -31,7 +38,7 @@ export default function ContratosSalidaPage() {
     )}`
   }, [salida.periodo, salida.fechaInicio, salida.fechaFin, salida.rangoSemanaLaboral])
 
-  if (salida.loading) {
+  if (salida.loading && salida.contratosSalida.length === 0) {
     return <LoadingScreen mensaje="Cargando contratos de salida..." />
   }
 
@@ -121,23 +128,23 @@ export default function ContratosSalidaPage() {
           tono="sky"
         />
         <TarjetaResumen
-          titulo="Recogidos"
-          valor={salida.resumen.recogidos}
-          detalle="Contratos recuperados"
+          titulo="Inactivos"
+          valor={salida.resumen.inactivos}
+          detalle={detalleInactivos}
           icono={RotateCcw}
           tono="slate"
         />
         <TarjetaResumen
-          titulo="Con primer pago"
+          titulo="Activos con primer pago"
           valor={salida.resumen.yaPagaron}
-          detalle="Activos con primer abono"
+          detalle="Siguen activos y ya abonaron"
           icono={PackageCheck}
           tono="emerald"
         />
         <TarjetaResumen
-          titulo="Pendientes"
+          titulo="Activos pendientes"
           valor={salida.resumen.pendientesPrimerPago}
-          detalle="Aun no registran primer pago"
+          detalle="Activos sin primer pago"
           icono={ClipboardList}
           tono="amber"
         />

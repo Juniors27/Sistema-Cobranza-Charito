@@ -38,6 +38,10 @@ export const useContratosSalida = () => {
   const [resumen, setResumen] = useState({
     total: 0,
     entregados: 0,
+    recogidos: 0,
+    cancelados: 0,
+    bajados: 0,
+    inactivos: 0,
     yaPagaron: 0,
     pendientesPrimerPago: 0,
     saldoTotal: 0,
@@ -49,6 +53,7 @@ export const useContratosSalida = () => {
   const [fechaFin, setFechaFin] = useState("")
   const [cobradorFiltro, setCobradorFiltro] = useState("todos")
   const [busqueda, setBusqueda] = useState("")
+  const [busquedaDebounced, setBusquedaDebounced] = useState("")
   const [paginaActual, setPaginaActual] = useState(1)
   const [registrosPorPagina, setRegistrosPorPagina] = useState(10)
   const [totalRegistros, setTotalRegistros] = useState(0)
@@ -72,7 +77,7 @@ export const useContratosSalida = () => {
         fechaInicio,
         fechaFin,
         cobrador: cobradorFiltro,
-        search: busqueda,
+        search: busquedaDebounced,
         page: paginaActual,
         pageSize: registrosPorPagina,
       })
@@ -92,6 +97,10 @@ export const useContratosSalida = () => {
         respuesta.resumen || {
           total: 0,
           entregados: 0,
+          recogidos: 0,
+          cancelados: 0,
+          bajados: 0,
+          inactivos: 0,
           yaPagaron: 0,
           pendientesPrimerPago: 0,
           saldoTotal: 0,
@@ -110,7 +119,7 @@ export const useContratosSalida = () => {
     } finally {
       setLoading(false)
     }
-  }, [periodo, fechaInicio, fechaFin, cobradorFiltro, busqueda, paginaActual, registrosPorPagina])
+  }, [periodo, fechaInicio, fechaFin, cobradorFiltro, busquedaDebounced, paginaActual, registrosPorPagina])
 
   useEffect(() => {
     cargarCobradores().catch(() => {})
@@ -122,7 +131,16 @@ export const useContratosSalida = () => {
 
   useEffect(() => {
     setPaginaActual(1)
-  }, [periodo, fechaInicio, fechaFin, cobradorFiltro, busqueda])
+  }, [periodo, fechaInicio, fechaFin, cobradorFiltro, busquedaDebounced])
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setBusquedaDebounced(busqueda.trim())
+      setPaginaActual(1)
+    }, 350)
+
+    return () => clearTimeout(timeoutId)
+  }, [busqueda])
 
   const rangoSemanaLaboral = useMemo(() => obtenerSemanaLaboral(), [])
 

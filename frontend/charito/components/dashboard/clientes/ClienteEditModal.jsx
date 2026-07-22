@@ -124,12 +124,28 @@ export default function ClienteEditModal({
             <label className="mb-2 block text-sm font-semibold">Dirección</label>
             <input
               type="text"
-              value={ventaEditar.direccion}
+              value={ventaEditar.direccion || ""}
               autoCapitalize="characters"
               onChange={(e) =>
                 setVentaEditar({
                   ...ventaEditar,
                   direccion: aMayusculas(e.target.value),
+                })
+              }
+              className="w-full rounded-xl border-2 border-gray-200 p-3"
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-semibold">Lugar</label>
+            <input
+              type="text"
+              value={ventaEditar.lugar || ""}
+              autoCapitalize="characters"
+              onChange={(e) =>
+                setVentaEditar({
+                  ...ventaEditar,
+                  lugar: aMayusculas(e.target.value),
                 })
               }
               className="w-full rounded-xl border-2 border-gray-200 p-3"
